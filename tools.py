@@ -1,6 +1,9 @@
 from win32api import GetMonitorInfo, MonitorFromPoint
 import math
 
+def generate_tk_geometry(window_size):
+    return window_size['width'] + "x" + window_size['height'] + calculate_unused_screen_area(window_size)
+
 # Currently a windows-only solution
 def calculate_unused_screen_area(window_size):
     # window_size: dictionary
