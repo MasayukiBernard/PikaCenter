@@ -1,25 +1,31 @@
 from tkinter import *
 from tkinter import ttk
-import time
 import tools
 
 class LoadingScreen:
     def __init__(self):
-        root = Tk()
-        root.title('Pika Center Invoicing Program')
+        window_size = {'width': "800", 'height': "450"}
+
+        self.root = Tk()
+        self.root.title("Pika Center Invoicing Program - Loading...")
+        self.root.geometry(tools.generate_tk_geometry(window_size))
+        self.root.resizable(False, False)
         
-        window_size = {'width': '800', 'height': '450'}
-        root.geometry(window_size['width'] + "x" + window_size['height'] + tools.calculate_unused_screen_area(window_size))
-        root.resizable(False, False)
-        root.columnconfigure(0, weight=1)
-        root.rowconfigure(0, weight=1)
         # Prevents closing
-        root.protocol('WM_DELETE_WINDOW', lambda: None)
-        # root.attributes('-fullscreen', True)
-        label = ttk.Label(root, text='Pika Center Invoicing Program', font=("Calibri", "36", "bold  "))
+        self.root.protocol('WM_DELETE_WINDOW', lambda: None)
+        # self.root.attributes('-fullscreen', True)
+        label = ttk.Label(self.root, text='Pika Center Invoicing Program', font=("Calibri", "36", "bold  "))
         label.grid(column=0, row=0)
     
-        root.after(2250, lambda: root.destroy())
-        root.mainloop()
+        self.progress_label = StringVar()
+        progress_label = ttk.Label(self.root, textvariable=self.progress_label)
+        progress_label.grid(column=0, row=1, sticky=(W))
 
-LoadingScreen()
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=5)
+        self.root.rowconfigure(1, weight=1)
+        self.root.after(2000, lambda: self.root.destroy())
+
+        self.root.mainloop()
+        
+        
