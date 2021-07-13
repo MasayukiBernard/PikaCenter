@@ -4,13 +4,16 @@ import math
 def generate_tk_geometry(window_size):
     return window_size['width'] + "x" + window_size['height'] + calculate_unused_screen_area(window_size)
 
+def get_monitor_actual_area():
+    work_area = GetMonitorInfo(MonitorFromPoint((0,0))).get("Work")
+    return {'width': work_area[2], 'height': work_area[3]}
+
 # Currently a windows-only solution
 def calculate_unused_screen_area(window_size):
     # window_size: dictionary
     # ex: {'width': 800, 'height': 450}
 
-    work_area = GetMonitorInfo(MonitorFromPoint((0,0))).get("Work")
-    monitor_size = {'width': work_area[2], 'height': work_area[3]}
+    monitor_size = get_monitor_actual_area()
 
     diff_size = {
         'width': int(math.ceil((int(monitor_size['width']) - int(window_size['width'])) / 2)), 
@@ -24,3 +27,10 @@ def calculate_unused_screen_area(window_size):
     
     
     return "+"+str(diff_size['width'])+"+"+str(diff_size['height'])
+
+def change_window_status(window_status_var, key, status):
+    window_status_var[key] = status
+
+def add_string_commas(str):
+    return "{:,}".format(int(str))
+    
