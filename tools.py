@@ -31,6 +31,9 @@ def calculate_unused_screen_area(window_size):
 def change_window_status(window_status_var, key, status):
     window_status_var[key] = status
 
-def add_string_commas(str):
-    return "{:,}".format(int(str))
-    
+def create_pretty_numerical(numeric):
+    stripped_zeros = ('%.24f' % numeric).rstrip('0').rstrip('.')
+    return "{:,}".format(int(stripped_zeros))
+
+def remove_non_integer(string):
+    return ''.join(filter(str.isdigit, string))
