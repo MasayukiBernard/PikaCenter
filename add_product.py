@@ -197,7 +197,6 @@ class AddProduct:
         key = args[0]
         selected_entry_idx = args[1]
         entered_str = self.form_detail_vars[key][selected_entry_idx].get()
-        print(key, selected_entry_idx, entered_str)
         if len(entered_str) > 0:
             res_str = ''
             res_str = tools.remove_non_integer(entered_str)
