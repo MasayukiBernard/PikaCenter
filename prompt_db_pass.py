@@ -1,18 +1,20 @@
 from tkinter import *
 from tkinter import ttk
 
-from win32api import AbortSystemShutdown
 import tools
 
 class PromptDatabasePassword:
-    def __init__(self, password):
+    def __init__(self, window_status, password):
         window_size = {'width': "600", 'height': "100"}
 
         self.root = Tk()
         self.root.title("Pika Center Invoicing Program - Database Authentication")
         self.root.geometry(tools.generate_tk_geometry(window_size))
         self.root.resizable(False, False)
-        self.root.protocol('WM_DELETE_WINDOW', lambda: None)
+        self.root.attributes("-topmost", 1)
+        
+        self.window_status = window_status
+        self.root.protocol('WM_DELETE_WINDOW', tools.change_window_status(self.window_status, 'is_closed', True))
 
         main_frame = ttk.Frame(self.root)
 
