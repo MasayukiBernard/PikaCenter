@@ -5,6 +5,8 @@ from pg8000.native import Connection
 import uuid
 import tools
 
+from add_product import AddProduct
+
 class Inventory:
     def __init__(self, window_status,  db_password):
         self.db_password = db_password
@@ -13,6 +15,9 @@ class Inventory:
         self.pad_val = 7
         self.frame_width = int(window_size['width']) - (2 * self.pad_val)
         self.window_status = window_status
+        self.child_windows_status = {
+            'manage_product': {'is_closed': False}
+        }
 
         self.root = Tk()
         self.root.title("Pika Center Invoicing Program - Inventory")
@@ -21,17 +26,19 @@ class Inventory:
         self.root.resizable(False, False)
 
         self.main_frame = ttk.Frame(self.root, width=self.frame_width)
-
         self.tree = {
             'product': ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'name', 'description'), height=13),
-            'detail': ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'sku', 'buyprice', 'sellprice'), height=13)
+            'detail': ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'sku', 'temp_invoice_id', 'buyprice', 'sellprice'), height=9)
         }
         self.y_scrollbar = {
             'product': ttk.Scrollbar(self.main_frame, orient=VERTICAL, command=self.tree['product'].yview),
             'detail': ttk.Scrollbar(self.main_frame, orient=VERTICAL, command=self.tree['detail'].yview)
         }
-
-        self.detail_label = ttk.Label(self.main_frame, text="Detil Barang")
+        self.detail_label = ttk.Label(self.main_frame, text="Detil Produk \"\"")
+        
+        self.btn_frame = ttk.Frame(self.main_frame, width=self.frame_width)
+        self.refresh_btn = ttk.Button(self.btn_frame, text="REFRESH", command=self.refresh_product_tree_data)
+        self.add_btn = ttk.Button(self.btn_frame, text="TAMBAH PRODUK", command=self.show_add_product)
         
         self.tree['product'].configure(yscrollcommand=self.y_scrollbar['product'].set)
         self.tree['product'].column('#0', width=0, stretch=False)
@@ -40,27 +47,24 @@ class Inventory:
         self.tree['product'].column('description',  width=int(self.frame_width * 0.275), stretch=False)
         self.tree['product'].heading('name', text="Nama")
         self.tree['product'].heading('description', text="Deskripsi")
-        
         self.tree['detail'].configure(yscrollcommand=self.y_scrollbar['detail'].set)
         self.tree['detail'].column('#0', width=0, stretch=False)
-        self.tree['detail'].column('idx', width=int(self.frame_width * 0.025), stretch=False, anchor='center')
-        self.tree['detail'].column('sku', width=int(self.frame_width * 0.55), stretch=False)
-        self.tree['detail'].column('buyprice',  width=int(self.frame_width * 0.2), stretch=False, anchor='e')
-        self.tree['detail'].column('sellprice',  width=int(self.frame_width * 0.2), stretch=False, anchor='e')
+        self.tree['detail'].column('idx', width=int(self.frame_width * .025), stretch=False, anchor='center')
+        self.tree['detail'].column('sku', width=int(self.frame_width * .2), stretch=False)
+        self.tree['detail'].column('temp_invoice_id', width=int(self.frame_width * .2), stretch=False)
+        self.tree['detail'].column('buyprice',  width=int(self.frame_width * 0.275), stretch=False, anchor='e')
+        self.tree['detail'].column('sellprice',  width=int(self.frame_width * 0.275), stretch=False, anchor='e')
         self.tree['detail'].heading('sku', text="SKU")
+        self.tree['detail'].heading('temp_invoice_id', text="Invoice ID")
         self.tree['detail'].heading('buyprice', text="Harga Beli")
         self.tree['detail'].heading('sellprice', text="Harga Jual Default")
         self.refresh_product_tree_data()
 
-
         self.tree['product'].bind('<<TreeviewSelect>>', self.refresh_detail_tree_data)
 
-
         self.main_frame.grid(column=0, row=0, sticky=(N, W, E, S))
-
         self.tree['product'].grid(column=0, row=0)
         self.y_scrollbar['product'].grid(column=1, row=0, sticky=(N, S))
-        
         self.tree['detail'].grid(column=0, row=2)
         self.y_scrollbar['detail'].grid(column=1, row=2, sticky=(N, S))
 
@@ -68,15 +72,17 @@ class Inventory:
             child.grid_configure(padx=self.pad_val, pady=self.pad_val)
         
         self.detail_label.grid(column=0, columnspan=2, row=1, padx=self.pad_val, pady=(int(self.pad_val * 2), 0))
-        
-        self.root.columnconfigure(0, weight=1)
-        self.root.columnconfigure(1, weight=1)
-        self.root.rowconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
+
+        self.btn_frame.grid(column=0, row=3, sticky=(N, W, E, S))
+        self.refresh_btn.grid(column=0, row=0, ipadx=self.pad_val)
+        self.add_btn.grid(column=1, row=0, ipadx=self.pad_val, padx=self.pad_val)
 
         self.root.mainloop()
     
     def refresh_product_tree_data(self):
+        self.tree['product'].delete(*self.tree['product'].get_children())
+        self.clear_detail()
+
         conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
         rl = conn.run("SELECT * FROM public.products ORDER BY name ASC")
 
@@ -96,7 +102,7 @@ class Inventory:
     def refresh_detail_tree_data(self, event):
         self.tree['detail'].delete(*self.tree['detail'].get_children())
         selected_product_key = self.tree['product'].selection()[0]
-        self.detail_label.configure(text="Detail Barang \"" + self.tree['product'].item(selected_product_key)['values'][1] + "\"")
+        self.detail_label.configure(text="Detail Produk \"" + self.tree['product'].item(selected_product_key)['values'][1] + "\"")
 
         conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
 
@@ -108,8 +114,18 @@ class Inventory:
                 'key': str(rl_detail[i][0]),
                 'refproductkey': str(rl_detail[i][1]),
                 'sku': str(rl_detail[i][2]),
-                'buyprice': tools.add_string_commas(('%.24f' % rl_detail[i][3]).rstrip('0').rstrip('.')),
-                'sellprice': tools.add_string_commas(('%.24f' % rl_detail[i][4]).rstrip('0').rstrip('.'))
+                'temp_invoice_id': str(rl_detail[i][5]),
+                'buyprice': tools.create_pretty_numerical(rl_detail[i][3]),
+                'sellprice': tools.create_pretty_numerical(rl_detail[i][4])
             }
 
-            self.tree['detail'].insert('', 'end', iid=detail['key'], values=(i+1, detail['sku'], detail['buyprice'], detail['sellprice']))
+            self.tree['detail'].insert('', 'end', iid=detail['key'], values=(i+1, detail['sku'], detail['temp_invoice_id'], detail['buyprice'], detail['sellprice']))
+    
+    def clear_detail(self):
+        self.tree['detail'].delete(*self.tree['detail'].get_children())
+        self.detail_label.configure(text="Detail Produk \"\"")
+
+    def show_add_product(self, *args):
+        self.root.destroy()
+        AddProduct(self.child_windows_status, self.db_password, self)
+
