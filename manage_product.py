@@ -37,10 +37,10 @@ class ManageProduct:
         self.canvas.configure(yscrollcommand=self.canvas_sb.set)
         self.canvas.bind('<Configure>', lambda event: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
 
-        self.main_frame = ttk.Frame(self.canvas, borderwidth=2, relief='groove')
+        self.main_frame = ttk.Frame(self.canvas)
         
         self.form_title_str = "Penambahan" if self.action_type_str[1] == "Tambah" else "Pengaturan" if self.action_type_str[1] == "Atur" else ""
-        self.title_label = ttk.Label(self.main_frame, text="Formulir " + self.form_title_str + " Produk", font=("Calibri", "16"), borderwidth=2, relief='groove')
+        self.title_label = ttk.Label(self.main_frame, text="Formulir " + self.form_title_str + " Produk", font=("Calibri", "16"))
         
         self.window_height = self.frame_height + 4000
         self.window_id = self.canvas.create_window((0,0), window=self.main_frame, anchor="nw", width=self.frame_width, height=self.window_height)
@@ -52,27 +52,27 @@ class ManageProduct:
             },
         }
 
-        self.form_frame = ttk.Frame(self.main_frame, width=self.frame_width, borderwidth=2, relief='groove')
+        self.form_frame = ttk.Frame(self.main_frame, width=self.frame_width)
         self.form_row_frame = {
-            'name': ttk.Frame(self.form_frame, borderwidth=2, relief='groove', width=self.frame_width),
-            'description': ttk.Frame(self.form_frame, borderwidth=2, relief='groove', width=self.frame_width),
+            'name': ttk.Frame(self.form_frame, width=self.frame_width),
+            'description': ttk.Frame(self.form_frame, width=self.frame_width),
         }
         self.form_row_col_frame = {
             'label':{
-                'name': ttk.Frame(self.form_row_frame['name'], borderwidth=2, relief='groove', width=int(self.frame_width*.34)),
-                'description': ttk.Frame(self.form_row_frame['description'], borderwidth=2, relief='groove', width=int(self.frame_width*.34))
+                'name': ttk.Frame(self.form_row_frame['name'], width=int(self.frame_width*.34)),
+                'description': ttk.Frame(self.form_row_frame['description'], width=int(self.frame_width*.34))
             },
             'entry':{
-                'name': ttk.Frame(self.form_row_frame['name'], borderwidth=2, relief='groove', width=int(self.frame_width*.66)),
-                'description': ttk.Frame(self.form_row_frame['description'], borderwidth=2, relief='groove', width=int(self.frame_width*.66))
+                'name': ttk.Frame(self.form_row_frame['name'], width=int(self.frame_width*.66)),
+                'description': ttk.Frame(self.form_row_frame['description'], width=int(self.frame_width*.66))
             },
         }
 
         self.form_widgets = {
             'product':{
                 'label': {
-                    'name': ttk.Label(self.form_row_frame['name'], text="Nama Barang", justify='right', borderwidth=2, relief='groove'),
-                    'description': ttk.Label(self.form_row_frame['description'], text="Deskripsi", justify='right', borderwidth=2, relief='groove')
+                    'name': ttk.Label(self.form_row_frame['name'], text="Nama Barang", justify='right'),
+                    'description': ttk.Label(self.form_row_frame['description'], text="Deskripsi", justify='right')
                 },
                 'entry': {
                     'name': ttk.Entry(self.form_row_frame['name'], textvariable=self.form_vars['product']['name'], width=50),
@@ -89,26 +89,26 @@ class ManageProduct:
         }
         self.form_detail_widgets = {}
         self.form_detail_widgets['frame'] = {
-            'title': ttk.Frame(self.form_frame, borderwidth=2, relief='groove', width=self.frame_width),
-            'heading': {'base': ttk.Frame(self.form_frame, borderwidth=2, relief='groove')},
+            'title': ttk.Frame(self.form_frame, width=self.frame_width),
+            'heading': {'base': ttk.Frame(self.form_frame)},
             'entry': [],
-            'btns_row': ttk.Frame(self.form_frame, borderwidth=2, relief='groove')
+            'btns_row': ttk.Frame(self.form_frame)
         }
         self.form_detail_widgets['frame']['heading']['column'] ={
-            'sku': ttk.Frame(self.form_detail_widgets['frame']['heading']['base'], borderwidth=2, relief='groove'),
-            'temp_invoice_id': ttk.Frame(self.form_detail_widgets['frame']['heading']['base'], borderwidth=2, relief='groove'),
-            'buyprice': ttk.Frame(self.form_detail_widgets['frame']['heading']['base'], borderwidth=2, relief='groove'),
-            'sellprice': ttk.Frame(self.form_detail_widgets['frame']['heading']['base'], borderwidth=2, relief='groove'),
-            'del_btn': ttk.Frame(self.form_detail_widgets['frame']['heading']['base'], borderwidth=2, relief='groove')
+            'sku': ttk.Frame(self.form_detail_widgets['frame']['heading']['base']),
+            'temp_invoice_id': ttk.Frame(self.form_detail_widgets['frame']['heading']['base']),
+            'buyprice': ttk.Frame(self.form_detail_widgets['frame']['heading']['base']),
+            'sellprice': ttk.Frame(self.form_detail_widgets['frame']['heading']['base']),
+            'del_btn': ttk.Frame(self.form_detail_widgets['frame']['heading']['base'])
         }
         self.form_detail_widgets['label'] = {
-            'title': ttk.Label(self.form_detail_widgets['frame']['title'], text="Detil Produk", borderwidth=2, relief='groove'),
+            'title': ttk.Label(self.form_detail_widgets['frame']['title'], text="Detil Produk"),
             'heading': {
-                'sku': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['sku'], text="SKU", borderwidth=2, relief='groove'),
-                'temp_invoice_id': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['temp_invoice_id'], text="No. Invoice", borderwidth=2, relief='groove'),
-                'buyprice': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['buyprice'], text="Harga Beli", borderwidth=2, relief='groove'),
-                'sellprice': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['sellprice'], text="Harga Jual", borderwidth=2, relief='groove'),
-                'del_btn': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['del_btn'], text="HAPUS", borderwidth=2, relief='groove')
+                'sku': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['sku'], text="SKU"),
+                'temp_invoice_id': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['temp_invoice_id'], text="No. Invoice"),
+                'buyprice': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['buyprice'], text="Harga Beli"),
+                'sellprice': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['sellprice'], text="Harga Jual"),
+                'del_btn': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['del_btn'], text="HAPUS")
             }
         }
         self.form_detail_widgets['entry'] = {
@@ -250,7 +250,7 @@ class ManageProduct:
         if len(args) > 0:
             data = args[0]
 
-        self.form_detail_widgets['frame']['entry'].append(ttk.Frame(self.form_frame, borderwidth=2, relief='groove'))
+        self.form_detail_widgets['frame']['entry'].append(ttk.Frame(self.form_frame))
         self.form_detail_vars['sku'].append(StringVar())
         self.form_detail_widgets['entry']['sku'].append(ttk.Entry(self.form_detail_widgets['frame']['entry'][current_len], justify='center', textvariable=self.form_detail_vars['sku'][current_len]))
         self.form_detail_vars['sku'][current_len].set(data['sku'])
@@ -282,9 +282,9 @@ class ManageProduct:
 
         self.form_detail_widgets['frame']['entry'][current_len].grid(column=0, row=self.current_row, sticky=(W, E))
         self.form_detail_widgets['entry']['sku'][current_len].grid(column=0, row=0, sticky=(W), padx=(self.pad_val+3,0))
-        self.form_detail_widgets['entry']['temp_invoice_id'][current_len].grid(column=1, row=0, sticky=(W), padx=(self.pad_val*2, 0), ipadx=self.pad_val*2)
+        self.form_detail_widgets['entry']['temp_invoice_id'][current_len].grid(column=1, row=0, sticky=(W), padx=(self.pad_val+2, 0), ipadx=self.pad_val*4)
         self.form_detail_widgets['entry']['buyprice'][current_len].grid(column=2, row=0, sticky=(W), padx=(self.pad_val,0), ipadx=self.pad_val*2)
-        self.form_detail_widgets['entry']['sellprice'][current_len].grid(column=3, row=0, sticky=(W), ipadx=self.pad_val*2)
+        self.form_detail_widgets['entry']['sellprice'][current_len].grid(column=3, row=0, sticky=(W), ipadx=self.pad_val*2+4)
         self.form_detail_widgets['del_btn'][current_len].grid(column=4, row=0, sticky=(W), padx=(0, self.pad_val*2))
 
         self.current_row += 1
@@ -325,7 +325,10 @@ class ManageProduct:
                 self.form_detail_widgets['del_btn'][i].configure(command=partial(self.delete_row, i))
         elif current_len == 1:
             for key, val in self.form_detail_vars.items():
-                val[0].set('')
+                if key == 'buyprice' or key == 'sellprice':
+                    self.fill_empty_entry(key, 0)
+                else:
+                    val[0].set('')
         
     def validate_inputs(self):
         is_passed = True
