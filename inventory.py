@@ -1,3 +1,4 @@
+from confirmation import Confirmation
 from alert import Alert
 from functools import partial
 from tkinter import *
@@ -30,7 +31,7 @@ class Inventory:
 
         self.main_frame = ttk.Frame(self.root, width=self.frame_width)
         self.tree = {
-            'product': ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'name', 'description'), height=13),
+            'product': ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'name', 'description', 'stock_rate'), height=13),
             'detail': ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'sku', 'temp_invoice_id', 'buyprice', 'sellprice'), height=9)
         }
         self.y_scrollbar = {
@@ -43,14 +44,17 @@ class Inventory:
         self.refresh_btn = ttk.Button(self.btn_frame, text="Refresh", command=self.refresh_product_tree_data)
         self.add_btn = ttk.Button(self.btn_frame, text="TAMBAH PRODUK", command=partial(self.show_manage_product, 'add'))
         self.manage_btn = ttk.Button(self.btn_frame, text="ATUR PRODUK", command=partial(self.show_manage_product, 'manage'))
+        self.delete_btn = ttk.Button(self.btn_frame, text="HAPUS PRODUK", command=self.delete_product)
         
         self.tree['product'].configure(yscrollcommand=self.y_scrollbar['product'].set)
         self.tree['product'].column('#0', width=0, stretch=False)
         self.tree['product'].column('idx', width=int(self.frame_width * 0.025), stretch=False, anchor='center')
-        self.tree['product'].column('name', width=int(self.frame_width * 0.675), stretch=False)
-        self.tree['product'].column('description',  width=int(self.frame_width * 0.275), stretch=False)
+        self.tree['product'].column('name', width=int(self.frame_width * 0.475), stretch=False)
+        self.tree['product'].column('description',  width=int(self.frame_width * 0.35), stretch=False)
+        self.tree['product'].column('stock_rate',  width=int(self.frame_width * .125), stretch=False, anchor='center')
         self.tree['product'].heading('name', text="Nama")
         self.tree['product'].heading('description', text="Deskripsi")
+        self.tree['product'].heading('stock_rate', text="Persentasi Stok Tersedia")
         self.tree['detail'].configure(yscrollcommand=self.y_scrollbar['detail'].set)
         self.tree['detail'].column('#0', width=0, stretch=False)
         self.tree['detail'].column('idx', width=int(self.frame_width * .025), stretch=False, anchor='center')
@@ -79,8 +83,9 @@ class Inventory:
 
         self.btn_frame.grid(column=0, row=3, sticky=(N, W, E, S))
         self.refresh_btn.grid(column=0, row=0, ipadx=self.pad_val)
-        self.add_btn.grid(column=1, row=0, ipadx=self.pad_val, padx=self.pad_val)
-        self.manage_btn.grid(column=2, row=0, ipadx=self.pad_val, padx=self.pad_val)
+        self.add_btn.grid(column=1, row=0, ipadx=self.pad_val, padx=(0,self.pad_val))
+        self.manage_btn.grid(column=2, row=0, ipadx=self.pad_val, padx=(0,self.pad_val))
+        self.delete_btn.grid(column=3, row=0, ipadx=self.pad_val, padx=(0,self.pad_val))
 
         self.root.lift()
         self.root.mainloop()
@@ -90,19 +95,23 @@ class Inventory:
         self.clear_detail()
 
         conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
-        rl = conn.run("SELECT * FROM public.products ORDER BY name ASC")
+        rl = conn.run("SELECT public.products.*, COUNT(public.products_details.pkey) FROM public.products, public.products_details WHERE public.products.pkey = public.products_details.refproductkey AND public.products_details.temp_invoice_id LIKE '' GROUP BY public.products.pkey ORDER BY public.products.name ASC")
+        
 
         dummy = [[uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc']]
         # rl += dummy
     
         for i in range(len(rl)):
+            available_stock = int(conn.run("SELECT COUNT(pkey) FROM public.products_details WHERE refproductkey = :product_key ", product_key=rl[i][0])[0][0])
             product = {
                 'key':str(rl[i][0]),
                 'name': str(rl[i][1]),
-                'description': str(rl[i][2])
+                'description': str(rl[i][2]),
+                'stock_rate': "{:.1f}%".format(int(rl[i][3]) * 100 / available_stock)
             }
+            
 
-            self.tree['product'].insert('', 'end', iid=product['key'], values=(i+1, product['name'], product['description']))            
+            self.tree['product'].insert('', 'end', iid=product['key'], values=(i+1, product['name'], product['description'], product['stock_rate']))            
 
             
     def refresh_detail_tree_data(self, event):
@@ -146,6 +155,25 @@ class Inventory:
 
         self.root.destroy()
         ManageProduct(self.child_windows_status, self.db_password, self, action_type, selected_product_keys)
+
+    def delete_product(self, *args):
+        selected_product_key = self.tree['product'].selection()[0]
+
+        if len(selected_product_key) == 0:
+            Alert("Produk harus dipilih terlebih dahulu sebelum bisa dihapus!")
+            return
+        
+        res_list = [None]
+        Confirmation("Delete", "Konfirmasi Penghapusan Produk Terpilih?", res_list)
+        confirmed = res_list[0]
+        
+        if confirmed:
+            conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
+            conn.run("START TRANSACTION")
+            conn.run("DELETE FROM public.products_details WHERE refproductkey = :product_key", product_key=selected_product_key)
+            conn.run("DELETE FROM public.products WHERE pkey = :product_key", product_key=selected_product_key)
+            conn.run("COMMIT")
+            self.refresh_product_tree_data()
 
     def close_window(self):
         tools.change_window_status(self.window_status, 'is_closed', True)
