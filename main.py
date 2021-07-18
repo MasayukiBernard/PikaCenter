@@ -26,6 +26,9 @@ def try_connecting_to_db(window_status):
     return is_success
 
 if __name__ == '__main__':
+    # TO REMEMBER
+    # .exe program needs to always run in admin mode
+    # hide console and create a single file using "pyinstaller --onefile --noconsole main.py"
     if ctypes.windll.shell32.IsUserAnAdmin():
         # Fire up postgreSql service, if not yet on
         command_res = os.system("sc start postgresql-x64-13")
