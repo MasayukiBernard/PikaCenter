@@ -13,8 +13,9 @@ class PromptDatabasePassword:
         self.root.resizable(False, False)
         self.root.attributes("-topmost", 1)
         
+        window_status['is_closed'] = False
         self.window_status = window_status
-        self.root.protocol('WM_DELETE_WINDOW', tools.change_window_status(self.window_status, 'is_closed', True))
+        self.root.protocol('WM_DELETE_WINDOW', self.close_window)
 
         main_frame = ttk.Frame(self.root)
 
@@ -41,8 +42,13 @@ class PromptDatabasePassword:
 
         password_entry.bind("<Return>", self.get_password)
 
+        self.root.lift()
         self.root.mainloop()
 
     def get_password(self, *args):
         self.password['inputted'] = self.password['inputted'].get()
+        self.root.destroy()
+
+    def close_window(self):
+        tools.change_window_status(self.window_status, 'is_closed', True)
         self.root.destroy()
