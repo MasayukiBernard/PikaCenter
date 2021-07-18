@@ -13,13 +13,12 @@ class LoadingScreen:
         
         # Prevents closing
         self.root.protocol('WM_DELETE_WINDOW', lambda: None)
-        # self.root.attributes('-fullscreen', True)
         label = ttk.Label(self.root, text='Pika Center Invoicing Program', font=("Calibri", "36", "bold"))
         label.grid(column=0, row=0)
 
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
-        self.root.after(2000, lambda: self.root.destroy())
+        self.root.after(1500, lambda: self.root.destroy())
 
         self.root.mainloop()
         
