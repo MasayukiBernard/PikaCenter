@@ -8,7 +8,7 @@ import tools
 from alert import Alert
 from confirmation import Confirmation
 
-class AddProduct:
+class ManageProduct:
     def __init__(self, window_status, db_password, parent_obj):
         self.db_password = db_password
         window_size = {'width': '800', 'height': '450'}

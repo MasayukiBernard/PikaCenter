@@ -1,3 +1,4 @@
+from functools import partial
 from tkinter import *
 from tkinter import ttk
 
@@ -5,7 +6,7 @@ from pg8000.native import Connection
 import uuid
 import tools
 
-from add_product import AddProduct
+from manage_product import ManageProduct
 
 class Inventory:
     def __init__(self, window_status,  db_password):
@@ -37,8 +38,9 @@ class Inventory:
         self.detail_label = ttk.Label(self.main_frame, text="Detil Produk \"\"")
         
         self.btn_frame = ttk.Frame(self.main_frame, width=self.frame_width)
-        self.refresh_btn = ttk.Button(self.btn_frame, text="REFRESH", command=self.refresh_product_tree_data)
-        self.add_btn = ttk.Button(self.btn_frame, text="TAMBAH PRODUK", command=self.show_add_product)
+        self.refresh_btn = ttk.Button(self.btn_frame, text="Refresh", command=self.refresh_product_tree_data)
+        self.add_btn = ttk.Button(self.btn_frame, text="TAMBAH PRODUK", command=partial(self.show_add_product, 'add'))
+        self.manage_btn = ttk.Button(self.btn_frame, text="ATUR PRODUK", command=partial(self.show_add_product, 'manage'))
         
         self.tree['product'].configure(yscrollcommand=self.y_scrollbar['product'].set)
         self.tree['product'].column('#0', width=0, stretch=False)
@@ -76,6 +78,7 @@ class Inventory:
         self.btn_frame.grid(column=0, row=3, sticky=(N, W, E, S))
         self.refresh_btn.grid(column=0, row=0, ipadx=self.pad_val)
         self.add_btn.grid(column=1, row=0, ipadx=self.pad_val, padx=self.pad_val)
+        self.manage_btn.grid(column=2, row=0, ipadx=self.pad_val, padx=self.pad_val)
 
         self.root.mainloop()
     
@@ -125,7 +128,9 @@ class Inventory:
         self.tree['detail'].delete(*self.tree['detail'].get_children())
         self.detail_label.configure(text="Detail Produk \"\"")
 
-    def show_add_product(self, *args):
+    def show_manage_product(self, *args):
+        action_type = args[0]
+        
         self.root.destroy()
-        AddProduct(self.child_windows_status, self.db_password, self)
+        ManageProduct(self.child_windows_status, self.db_password, self, action_type)
 
