@@ -9,7 +9,7 @@ from alert import Alert
 from confirmation import Confirmation
 
 class ManageProduct:
-    def __init__(self, window_status, db_password, parent_obj):
+    def __init__(self, window_status, db_password, parent_obj, action_type, product_key=""):
         self.db_password = db_password
         window_size = {'width': '800', 'height': '450'}
         self.monitor_actual_area = tools.get_monitor_actual_area()
@@ -18,12 +18,15 @@ class ManageProduct:
         self.frame_height = int(window_size['height']) - (2 * self.pad_val)
         self.window_status = window_status
 
-        window_status['manage_product'] = True
+        window_status['is_closed'] = False
         self.window_status = window_status
         self.parent_obj = parent_obj
+        self.action_type_str = ["Add", "Tambah"] if action_type == 'add' else ["Manage", "Atur"] if action_type == 'manage' else ""
+        self.product_key = product_key
 
         self.root = Tk()
-        self.root.title("Pika Center Invoicing Program - Add Product")
+
+        self.root.title("Pika Center Invoicing Program - " + self.action_type_str[0] + " Product")
         self.root.geometry(tools.generate_tk_geometry(window_size))
         self.root.protocol('WM_DELETE_WINDOW', self.close_window)
         self.root.resizable(False, False)
@@ -35,7 +38,9 @@ class ManageProduct:
         self.canvas.bind('<Configure>', lambda event: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
 
         self.main_frame = ttk.Frame(self.canvas, borderwidth=2, relief='groove')
-        self.title_label = ttk.Label(self.main_frame, text="Formulir Penambahan Produk", font=("Calibri", "16"), borderwidth=2, relief='groove')
+        
+        self.form_title_str = "Penambahan" if self.action_type_str[1] == "Tambah" else "Pengaturan" if self.action_type_str[1] == "Atur" else ""
+        self.title_label = ttk.Label(self.main_frame, text="Formulir " + self.form_title_str + " Produk", font=("Calibri", "16"), borderwidth=2, relief='groove')
         
         self.window_height = self.frame_height + 4000
         self.window_id = self.canvas.create_window((0,0), window=self.main_frame, anchor="nw", width=self.frame_width, height=self.window_height)
@@ -165,7 +170,7 @@ class ManageProduct:
 
         for key, row_frame in self.form_row_frame.items():
             row_frame.grid_columnconfigure(0, weight=1)
-            row_frame.grid_columnconfigure(1, weight=1)             
+            row_frame.grid_columnconfigure(1, weight=1)
         
         for key, label in self.form_widgets['product']['label'].items():
             label.grid_columnconfigure(0, weight=1)
@@ -174,7 +179,7 @@ class ManageProduct:
 
         self.form_detail_widgets['frame']['title'].grid_columnconfigure(0, weight=1)
         self.form_detail_widgets['frame']['heading']['base'].grid_columnconfigure(0, weight=8)
-        self.form_detail_widgets['frame']['heading']['base'].grid_columnconfigure(1, weight=10)
+        self.form_detail_widgets['frame']['heading']['base'].grid_columnconfigure(1, weight=10) 
         self.form_detail_widgets['frame']['heading']['base'].grid_columnconfigure(2, weight=9)
         self.form_detail_widgets['frame']['heading']['base'].grid_columnconfigure(3, weight=8)
         self.form_detail_widgets['frame']['heading']['base'].grid_columnconfigure(4, weight=1)
@@ -184,8 +189,12 @@ class ManageProduct:
         self.form_detail_widgets['frame']['heading']['column']['sellprice'].grid_columnconfigure(0, weight=1)
         self.form_detail_widgets['frame']['heading']['column']['del_btn'].grid_columnconfigure(0, weight=1)
         
-        self.add_new_row()
-
+        if action_type == 'manage':
+            self.load_existing_data()
+        else:
+            self.add_new_row()
+        
+        self.root.lift()
         self.root.mainloop()
     
     def close_window(self, *args):
@@ -205,26 +214,69 @@ class ManageProduct:
                 self.form_detail_vars[key][selected_entry_idx].set(res_str)
             else:
                 self.form_detail_vars[key][selected_entry_idx].set('')
+    
+    def fill_empty_entry(self, *args):
+        key = args[0]
+        selected_entry_idx = args[1]
+        entered_str = self.form_detail_vars[key][selected_entry_idx].get()
+
+        if len(entered_str) == 0:
+            self.form_detail_vars[key][selected_entry_idx].set('0')
             
+    def load_existing_data(self):
+        if len(self.product_key) > 0:
+            query_sql = "SELECT * FROM public.products WHERE pkey = :product_key LIMIT 1"
+            conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
+            rl = conn.run(query_sql, product_key=self.product_key)
+            conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
+            detail_query_sql = "SELECT pkey, sku, buyprice, sellprice, temp_invoice_id FROM public.products_details WHERE refproductkey = :product_key"
+            rl_detail = conn.run(detail_query_sql, product_key=self.product_key)
+            
+            if len(rl) == 1:
+                self.form_vars['product']['name'].set(str(rl[0][1]))
+                self.form_vars['product']['description'].set(str(rl[0][2]))
+                if len(rl_detail) > 0:
+                    for i in range(len(rl_detail)):
+                        self.add_new_row({
+                            'sku': str(rl_detail[i][1]),
+                            'temp_invoice_id': str(rl_detail[i][4]),
+                            'buyprice': rl_detail[i][2],
+                            'sellprice': rl_detail[i][3],
+                        })
 
     def add_new_row(self, *args):
         current_len = len(self.form_detail_widgets['del_btn'])
+        data = {'sku': "", 'temp_invoice_id': "", 'buyprice': "0", 'sellprice': "0"}
+        if len(args) > 0:
+            data = args[0]
 
         self.form_detail_widgets['frame']['entry'].append(ttk.Frame(self.form_frame, borderwidth=2, relief='groove'))
         self.form_detail_vars['sku'].append(StringVar())
         self.form_detail_widgets['entry']['sku'].append(ttk.Entry(self.form_detail_widgets['frame']['entry'][current_len], justify='center', textvariable=self.form_detail_vars['sku'][current_len]))
+        self.form_detail_vars['sku'][current_len].set(data['sku'])
         self.form_detail_vars['temp_invoice_id'].append(StringVar())
         self.form_detail_widgets['entry']['temp_invoice_id'].append(ttk.Entry(self.form_detail_widgets['frame']['entry'][current_len], justify='center', textvariable=self.form_detail_vars['temp_invoice_id'][current_len]))
+        self.form_detail_vars['temp_invoice_id'][current_len].set(data['temp_invoice_id'])
 
         self.form_detail_vars['buyprice'].append(StringVar())
         temp_bp = ttk.Entry(self.form_detail_widgets['frame']['entry'][current_len], justify='center', textvariable=self.form_detail_vars['buyprice'][current_len])
         temp_bp.bind("<KeyRelease>", partial(self.correct_numeric_entry, 'buyprice', current_len))
+        temp_bp.bind("<FocusOut>", partial(self.fill_empty_entry, 'buyprice', current_len))
         self.form_detail_widgets['entry']['buyprice'].append(temp_bp)
+        temp_bp_val = data['buyprice']
+        if self.action_type_str[0] == 'Manage' and type(temp_bp_val) is not str:
+            temp_bp_val = tools.create_pretty_numerical(temp_bp_val)
+        self.form_detail_vars['buyprice'][current_len].set(temp_bp_val)
 
         self.form_detail_vars['sellprice'].append(StringVar())
         temp_sp = ttk.Entry(self.form_detail_widgets['frame']['entry'][current_len], justify='center', textvariable=self.form_detail_vars['sellprice'][current_len])
         temp_sp.bind("<KeyRelease>", partial(self.correct_numeric_entry, 'sellprice', current_len))
+        temp_sp.bind("<FocusOut>", partial(self.fill_empty_entry, 'sellprice', current_len))
         self.form_detail_widgets['entry']['sellprice'].append(temp_sp)
+        temp_sp_val = data['sellprice']
+        if self.action_type_str[0] == 'Manage' and type(temp_sp_val) is not str:
+            temp_sp_val = tools.create_pretty_numerical(temp_sp_val)
+        self.form_detail_vars['sellprice'][current_len].set(temp_sp_val)
 
         self.form_detail_widgets['del_btn'].append(ttk.Button(self.form_detail_widgets['frame']['entry'][current_len], text='X',width=3, command=lambda: self.delete_row(current_len)))
 
@@ -288,7 +340,11 @@ class ManageProduct:
             is_not_empty = False
             for key in keys:
                 if len(self.form_detail_vars[key][i].get()) > 0:
-                    is_not_empty = True
+                    if key == 'buyprice' or key == 'sellprice':
+                        if self.form_detail_vars[key][i].get() != "0":
+                            is_not_empty = True
+                    else:
+                        is_not_empty = True
             
             if not is_not_empty:
                 row_idx_to_del.append(i)
@@ -307,45 +363,59 @@ class ManageProduct:
             return
 
         res_list = [None]
-        Confirmation("Product", "Konfirmasi Penambahan Produk", res_list=res_list)
+        Confirmation("Product", "Konfirmasi Penyimpanan Produk", res_list=res_list)
         confirmed = res_list[0]
 
         if confirmed:
-            for key, val in self.form_detail_vars.items():
-                print(key)
-                print('len:', len(val))
-                for item in val:
-                    print(item.get())
-            print("\n")
+            # for key, val in self.form_detail_vars.items():
+            #     print(key)
+            #     print('len:', len(val))
+            #     for item in val:
+            #         print(item.get())
+            # print("\n")
             
             
-            insert_dict = {}
-            insert_sql = "INSERT INTO public.products (pkey, name, description) VALUES (:generated_uuid, :name, :description);"
-            insert_dict['name'] = self.form_vars['product']['name'].get().replace("\n", "")
-            insert_dict['description'] = self.form_vars['product']['description'].get().replace("\n", "")
+            product_dict = {}
+            product_sql = ""
             conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
-            generated_uuid = conn.run("SELECT uuid_generate_v1();")[0][0]
-            insert_dict['generated_uuid'] = generated_uuid
-            conn.run(insert_sql, **insert_dict)
-
-            res_len = len(self.form_detail_vars['sku'])
+            conn.run("START TRANSACTION")
             
+            if self.action_type_str[0] == 'Add':
+                product_sql += "INSERT INTO public.products (pkey, name, description) VALUES (:generated_uuid, :name, :description);"
+                product_dict['generated_uuid'] = conn.run("SELECT uuid_generate_v1();")[0][0]
+            elif self.action_type_str[0] == 'Manage':
+                product_sql += "UPDATE public.products SET name = :name, description = :description WHERE pkey = :product_key"
+                product_dict['product_key'] = self.product_key
+            product_dict['name'] = self.form_vars['product']['name'].get().replace("\n", "")
+            product_dict['description'] = self.form_vars['product']['description'].get().replace("\n", "")
+            conn.run(product_sql, **product_dict)
+
+            if self.action_type_str[0] == 'Manage':
+                conn.run("DELETE FROM public.products_details WHERE refproductkey = :product_key", product_key=self.product_key)
+            
+            res_len = len(self.form_detail_vars['sku'])
             for i in range(res_len):
-                insert_dict = {}
-                insert_sql = ""
-                insert_sql += "INSERT INTO public.products_details(pkey, refproductkey, sku, temp_invoice_id, buyprice, sellprice) VALUES(uuid_generate_v1(), :generated_uuid, :sku_"+str(i)+", :temp_invoice_id_"+str(i)+", :buyprice_"+str(i)+", :sellprice_"+str(i)+");"
+                detail_dict = {}
+                detail_sql = ""
+
+                detail_sql += "INSERT INTO public.products_details(pkey, refproductkey, sku, temp_invoice_id, buyprice, sellprice) VALUES(uuid_generate_v1(), :generated_uuid, :sku_"+str(i)+", :temp_invoice_id_"+str(i)+", :buyprice_"+str(i)+", :sellprice_"+str(i)+");"
                 
-                insert_dict['generated_uuid'] = generated_uuid
-                insert_dict['sku_'+str(i)] = self.form_detail_vars['sku'][i].get()
-                insert_dict['temp_invoice_id_'+str(i)] = self.form_detail_vars['temp_invoice_id'][i].get()
+                if self.action_type_str[0] == 'Add':
+                    detail_dict['generated_uuid'] = product_dict['generated_uuid']
+                elif self.action_type_str[0] == 'Manage':
+                    detail_dict['generated_uuid'] = self.product_key
+
+                detail_dict['sku_'+str(i)] = self.form_detail_vars['sku'][i].get()
+                detail_dict['temp_invoice_id_'+str(i)] = self.form_detail_vars['temp_invoice_id'][i].get()
                 bp_str = str(self.form_detail_vars['buyprice'][i].get())
                 bp_str = bp_str.replace(',', '')
-                insert_dict['buyprice_'+str(i)] = bp_str
+                detail_dict['buyprice_'+str(i)] = bp_str
                 sp_str = str(self.form_detail_vars['sellprice'][i].get())
                 sp_str = sp_str.replace(',', '')
-                insert_dict['sellprice_'+str(i)] = sp_str
+                detail_dict['sellprice_'+str(i)] = sp_str
                 
-                conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
-                conn.run(insert_sql, **insert_dict)
+                conn.run(detail_sql, **detail_dict)
+            
+            conn.run("COMMIT")
 
-        self.close_window()
+            self.close_window()
