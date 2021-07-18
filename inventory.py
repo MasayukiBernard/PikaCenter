@@ -1,3 +1,4 @@
+from alert import Alert
 from functools import partial
 from tkinter import *
 from tkinter import ttk
@@ -15,6 +16,7 @@ class Inventory:
         self.monitor_actual_area = tools.get_monitor_actual_area()
         self.pad_val = 7
         self.frame_width = int(window_size['width']) - (2 * self.pad_val)
+        window_status['is_closed'] = False
         self.window_status = window_status
         self.child_windows_status = {
             'manage_product': {'is_closed': False}
@@ -23,7 +25,7 @@ class Inventory:
         self.root = Tk()
         self.root.title("Pika Center Invoicing Program - Inventory")
         self.root.geometry(tools.generate_tk_geometry(window_size))
-        self.root.protocol('WM_DELETE_WINDOW', tools.change_window_status(self.window_status, 'is_closed', True))
+        self.root.protocol('WM_DELETE_WINDOW', self.close_window)
         self.root.resizable(False, False)
 
         self.main_frame = ttk.Frame(self.root, width=self.frame_width)
@@ -39,8 +41,8 @@ class Inventory:
         
         self.btn_frame = ttk.Frame(self.main_frame, width=self.frame_width)
         self.refresh_btn = ttk.Button(self.btn_frame, text="Refresh", command=self.refresh_product_tree_data)
-        self.add_btn = ttk.Button(self.btn_frame, text="TAMBAH PRODUK", command=partial(self.show_add_product, 'add'))
-        self.manage_btn = ttk.Button(self.btn_frame, text="ATUR PRODUK", command=partial(self.show_add_product, 'manage'))
+        self.add_btn = ttk.Button(self.btn_frame, text="TAMBAH PRODUK", command=partial(self.show_manage_product, 'add'))
+        self.manage_btn = ttk.Button(self.btn_frame, text="ATUR PRODUK", command=partial(self.show_manage_product, 'manage'))
         
         self.tree['product'].configure(yscrollcommand=self.y_scrollbar['product'].set)
         self.tree['product'].column('#0', width=0, stretch=False)
@@ -80,6 +82,7 @@ class Inventory:
         self.add_btn.grid(column=1, row=0, ipadx=self.pad_val, padx=self.pad_val)
         self.manage_btn.grid(column=2, row=0, ipadx=self.pad_val, padx=self.pad_val)
 
+        self.root.lift()
         self.root.mainloop()
     
     def refresh_product_tree_data(self):
@@ -129,8 +132,22 @@ class Inventory:
         self.detail_label.configure(text="Detail Produk \"\"")
 
     def show_manage_product(self, *args):
+
         action_type = args[0]
-        
+        selected_product_keys = ""
+
+        if action_type == 'manage':
+            selected_product_keys = self.tree['product'].selection()
+            if len(selected_product_keys) == 0:
+                Alert("Produk harus dipilih terlebih dahulu sebelum bisa diatur!")
+                return
+            else:
+                selected_product_keys = selected_product_keys[0]
+
         self.root.destroy()
-        ManageProduct(self.child_windows_status, self.db_password, self, action_type)
+        ManageProduct(self.child_windows_status, self.db_password, self, action_type, selected_product_keys)
+
+    def close_window(self):
+        tools.change_window_status(self.window_status, 'is_closed', True)
+        self.root.destroy()
 
