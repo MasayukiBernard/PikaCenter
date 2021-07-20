@@ -31,6 +31,9 @@ def calculate_unused_screen_area(window_size):
 def change_window_status(window_status_var, key, status):
     window_status_var[key] = status
 
+def create_pretty_alphanumerical(string):
+    return string.replace("\n", "").rstrip(" ").lstrip(" ")
+
 def create_pretty_numerical(numeric):
     stripped_zeros = ('%.24f' % numeric).rstrip('0').rstrip('.')
     return "{:,}".format(int(stripped_zeros))
