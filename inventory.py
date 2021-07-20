@@ -83,7 +83,7 @@ class Inventory:
 
         self.btn_frame.grid(column=0, row=3, sticky=(N, W, E, S))
         self.refresh_btn.grid(column=0, row=0, ipadx=self.pad_val)
-        self.add_btn.grid(column=1, row=0, ipadx=self.pad_val, padx=(0,self.pad_val))
+        self.add_btn.grid(column=1, row=0, ipadx=self.pad_val, padx=(self.pad_val*3,self.pad_val))
         self.manage_btn.grid(column=2, row=0, ipadx=self.pad_val, padx=(0,self.pad_val))
         self.delete_btn.grid(column=3, row=0, ipadx=self.pad_val, padx=(0,self.pad_val))
 
@@ -95,19 +95,20 @@ class Inventory:
         self.clear_detail()
 
         conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
-        rl = conn.run("SELECT public.products.*, COUNT(public.products_details.pkey) FROM public.products, public.products_details WHERE public.products.pkey = public.products_details.refproductkey AND public.products_details.temp_invoice_id LIKE '' GROUP BY public.products.pkey ORDER BY public.products.name ASC")
+        rl = conn.run("SELECT public.products.* FROM public.products, public.products_details WHERE public.products.pkey = public.products_details.refproductkey GROUP BY public.products.pkey ORDER BY public.products.name ASC")
         
 
         dummy = [[uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc'], [uuid.uuid4(), 'Test Name', 'Test Desc']]
         # rl += dummy
     
         for i in range(len(rl)):
-            available_stock = int(conn.run("SELECT COUNT(pkey) FROM public.products_details WHERE refproductkey = :product_key ", product_key=rl[i][0])[0][0])
+            total_stock = int(conn.run("SELECT COUNT(pkey) FROM public.products_details WHERE refproductkey = :product_key;", product_key=rl[i][0])[0][0])
+            used_stock = int(conn.run("SELECT COUNT(pkey) FROM public.products_details WHERE refproductkey = :product_key AND temp_invoice_id NOT LIKE '';", product_key=rl[i][0])[0][0])
             product = {
                 'key':str(rl[i][0]),
                 'name': str(rl[i][1]),
                 'description': str(rl[i][2]),
-                'stock_rate': "{:.1f}%".format(int(rl[i][3]) * 100 / available_stock)
+                'stock_rate': "{:.1f}%".format((total_stock - used_stock) * 100 / total_stock)
             }
             
 
