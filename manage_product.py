@@ -80,6 +80,8 @@ class ManageProduct:
                 }
             },
         }
+        self.form_widgets['product']['entry']['name'].bind("<FocusOut>", partial(self.correct_alphanumerical_entry, 'product', 'name'))
+        self.form_widgets['product']['entry']['description'].bind("<FocusOut>", partial(self.correct_alphanumerical_entry, 'product', 'description'))
 
         self.form_detail_vars = {
             'sku': [],
@@ -149,7 +151,12 @@ class ManageProduct:
         self.form_detail_widgets['frame']['heading']['column']['buyprice'].grid(column=2, row=0, sticky=(W, E))
         self.form_detail_widgets['frame']['heading']['column']['sellprice'].grid(column=3, row=0, sticky=(W, E))
         self.form_detail_widgets['frame']['heading']['column']['del_btn'].grid(column=4, row=0, sticky=(W, E))
-        self.current_row = 4
+
+        self.form_detail_widgets['frame']['btns_row'].grid(column=0, row=4, sticky=(W))
+        self.form_detail_widgets['add_row_btn'].grid(column=0, row=0, sticky=(W), padx=(self.pad_val+2, 0))
+        self.form_detail_widgets['save_btn'].grid(column=1, row=0, sticky=(W), padx=(self.pad_val, 0))
+        
+        self.current_row = 5
 
         self.form_detail_widgets['label']['title'].grid(column=0, row=0)
         self.form_detail_widgets['label']['heading']['sku'].grid(column=0, row=0)
@@ -188,11 +195,11 @@ class ManageProduct:
         self.form_detail_widgets['frame']['heading']['column']['buyprice'].grid_columnconfigure(0, weight=1)
         self.form_detail_widgets['frame']['heading']['column']['sellprice'].grid_columnconfigure(0, weight=1)
         self.form_detail_widgets['frame']['heading']['column']['del_btn'].grid_columnconfigure(0, weight=1)
+        self.form_detail_widgets['frame']['btns_row'].grid_columnconfigure(0, weight=1)
+        self.form_detail_widgets['frame']['btns_row'].grid_columnconfigure(1, weight=1)
         
         if action_type == 'manage':
             self.load_existing_data()
-        else:
-            self.add_new_row()
         
         self.root.lift()
         self.root.mainloop()
@@ -201,6 +208,32 @@ class ManageProduct:
         tools.change_window_status(self.window_status, 'is_closed', True)
         self.root.destroy()
         self.parent_obj.__init__(self.parent_obj.window_status, self.db_password)
+
+    def correct_alphanumerical_entry(self, *args):
+        type = args[0]
+        key = args[1]
+        if type == 'detail':
+            selected_entry_idx = args[2]
+
+        if type == 'detail':
+            entered_str = self.form_detail_vars[key][selected_entry_idx].get()
+            if len(entered_str) > 0:
+                res_str = ''
+                res_str = tools.create_pretty_alphanumerical(entered_str)
+                if len(res_str) > 0:
+                    self.form_detail_vars[key][selected_entry_idx].set(res_str)
+                else:
+                    self.form_detail_vars[key][selected_entry_idx].set('')
+        elif type == 'product':
+            entered_str = self.form_vars['product'][key].get()
+            if len(entered_str) > 0:
+                res_str = ''
+                res_str = tools.create_pretty_alphanumerical(entered_str)
+                if len(res_str) > 0:
+                    self.form_vars['product'][key].set(res_str)
+                else:
+                    self.form_vars['product'][key].set('')
+                
 
     def correct_numeric_entry(self, *args):
         key = args[0]
@@ -253,9 +286,11 @@ class ManageProduct:
         self.form_detail_widgets['frame']['entry'].append(ttk.Frame(self.form_frame))
         self.form_detail_vars['sku'].append(StringVar())
         self.form_detail_widgets['entry']['sku'].append(ttk.Entry(self.form_detail_widgets['frame']['entry'][current_len], justify='center', textvariable=self.form_detail_vars['sku'][current_len]))
+        self.form_detail_widgets['entry']['sku'][current_len].bind("<FocusOut>", partial(self.correct_alphanumerical_entry, 'detail', 'sku', current_len))
         self.form_detail_vars['sku'][current_len].set(data['sku'])
         self.form_detail_vars['temp_invoice_id'].append(StringVar())
         self.form_detail_widgets['entry']['temp_invoice_id'].append(ttk.Entry(self.form_detail_widgets['frame']['entry'][current_len], justify='center', textvariable=self.form_detail_vars['temp_invoice_id'][current_len]))
+        self.form_detail_widgets['entry']['temp_invoice_id'][current_len].bind("<FocusOut>", partial(self.correct_alphanumerical_entry, 'detail', 'temp_invoice_id', current_len))
         self.form_detail_vars['temp_invoice_id'][current_len].set(data['temp_invoice_id'])
 
         self.form_detail_vars['buyprice'].append(StringVar())
@@ -285,7 +320,7 @@ class ManageProduct:
         self.form_detail_widgets['entry']['temp_invoice_id'][current_len].grid(column=1, row=0, sticky=(W), padx=(self.pad_val+2, 0), ipadx=self.pad_val*4)
         self.form_detail_widgets['entry']['buyprice'][current_len].grid(column=2, row=0, sticky=(W), padx=(self.pad_val,0), ipadx=self.pad_val*2)
         self.form_detail_widgets['entry']['sellprice'][current_len].grid(column=3, row=0, sticky=(W), ipadx=self.pad_val*2+4)
-        self.form_detail_widgets['del_btn'][current_len].grid(column=4, row=0, sticky=(W), padx=(0, self.pad_val*2))
+        self.form_detail_widgets['del_btn'][current_len].grid(column=4, row=0, sticky=(W), padx=(0, self.pad_val*2-3))
 
         self.current_row += 1
 
@@ -303,7 +338,7 @@ class ManageProduct:
     
     def delete_row(self, *args):
         current_len = len(self.form_detail_widgets['del_btn'])
-        if current_len > 1:
+        if current_len > 0:
             row_idx = args[0]
 
             for key, val in self.form_detail_widgets['entry'].items():
@@ -323,12 +358,6 @@ class ManageProduct:
 
             for i in range(new_current_len):
                 self.form_detail_widgets['del_btn'][i].configure(command=partial(self.delete_row, i))
-        elif current_len == 1:
-            for key, val in self.form_detail_vars.items():
-                if key == 'buyprice' or key == 'sellprice':
-                    self.fill_empty_entry(key, 0)
-                else:
-                    val[0].set('')
         
     def validate_inputs(self):
         is_passed = True
@@ -376,7 +405,6 @@ class ManageProduct:
             #     for item in val:
             #         print(item.get())
             # print("\n")
-            
             
             product_dict = {}
             product_sql = ""
