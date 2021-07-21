@@ -40,3 +40,15 @@ def create_pretty_numerical(numeric):
 
 def remove_non_integer(string):
     return ''.join(filter(str.isdigit, string))
+
+def destroy_roots_recursively(roots_list):
+    for list_item in roots_list:
+        if type(list_item) is not list:
+            try:
+                list_item.destroy()
+            except Exception as e:
+                pass
+            
+            continue
+
+        destroy_roots_recursively(list_item)

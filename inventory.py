@@ -11,7 +11,7 @@ import tools
 from manage_product import ManageProduct
 
 class Inventory:
-    def __init__(self, window_status,  db_password):
+    def __init__(self, window_status, parent_child_roots_list, db_password):
         self.db_password = db_password
         window_size = {'width': '1200', 'height': '675'}
         self.monitor_actual_area = tools.get_monitor_actual_area()
@@ -23,7 +23,11 @@ class Inventory:
             'manage_product': {'is_closed': False}
         }
 
-        self.root = Tk()
+        self.root = Toplevel()
+        self.child_roots = []
+        parent_child_roots_list.append(self.child_roots)
+        parent_child_roots_list.append(self.root)
+
         self.root.title("Pika Center Invoicing Program - Inventory")
         self.root.geometry(tools.generate_tk_geometry(window_size))
         self.root.protocol('WM_DELETE_WINDOW', self.close_window)
@@ -90,11 +94,19 @@ class Inventory:
         self.root.lift()
         self.root.mainloop()
     
+    def close_window(self):
+        tools.change_window_status(self.window_status, 'is_closed', True)
+        self.root.destroy()
+
+        tools.destroy_roots_recursively(self.child_roots)
+
     def refresh_product_tree_data(self):
         self.tree['product'].delete(*self.tree['product'].get_children())
         self.clear_detail()
 
         conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
+
+        # FIX THIS, product not showing when there's no detail
         rl = conn.run("SELECT public.products.* FROM public.products, public.products_details WHERE public.products.pkey = public.products_details.refproductkey GROUP BY public.products.pkey ORDER BY public.products.name ASC")
         
 
@@ -149,13 +161,12 @@ class Inventory:
         if action_type == 'manage':
             selected_product_keys = self.tree['product'].selection()
             if len(selected_product_keys) == 0:
-                Alert("Produk harus dipilih terlebih dahulu sebelum bisa diatur!")
+                Alert(self.child_roots, "Produk harus dipilih terlebih dahulu sebelum bisa diatur!")
                 return
             else:
                 selected_product_keys = selected_product_keys[0]
 
-        self.root.destroy()
-        ManageProduct(self.child_windows_status, self.db_password, self, action_type, selected_product_keys)
+        ManageProduct(self.child_windows_status, self.child_roots, self.db_password, self, action_type, selected_product_keys)
 
     def delete_product(self, *args):
         selected_product_key = self.tree['product'].selection()[0]
@@ -165,7 +176,7 @@ class Inventory:
             return
         
         res_list = [None]
-        Confirmation("Delete", "Konfirmasi Penghapusan Produk Terpilih?", res_list)
+        Confirmation(self.root, "Delete", "Konfirmasi Penghapusan Produk Terpilih?", res_list)
         confirmed = res_list[0]
         
         if confirmed:
@@ -175,8 +186,4 @@ class Inventory:
             conn.run("DELETE FROM public.products WHERE pkey = :product_key", product_key=selected_product_key)
             conn.run("COMMIT")
             self.refresh_product_tree_data()
-
-    def close_window(self):
-        tools.change_window_status(self.window_status, 'is_closed', True)
-        self.root.destroy()
 

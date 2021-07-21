@@ -9,14 +9,13 @@ from alert import Alert
 from confirmation import Confirmation
 
 class ManageProduct:
-    def __init__(self, window_status, db_password, parent_obj, action_type, product_key=""):
+    def __init__(self, window_status, parent_child_roots_list, db_password, parent_obj, action_type, product_key=""):
         self.db_password = db_password
         window_size = {'width': '800', 'height': '450'}
         self.monitor_actual_area = tools.get_monitor_actual_area()
         self.pad_val = 7
         self.frame_width = int(window_size['width']) - (3 * self.pad_val)
         self.frame_height = int(window_size['height']) - (2 * self.pad_val)
-        self.window_status = window_status
 
         window_status['is_closed'] = False
         self.window_status = window_status
@@ -24,7 +23,10 @@ class ManageProduct:
         self.action_type_str = ["Add", "Tambah"] if action_type == 'add' else ["Manage", "Atur"] if action_type == 'manage' else ""
         self.product_key = product_key
 
-        self.root = Tk()
+        self.root = Toplevel()
+        self.child_roots = []
+        parent_child_roots_list.append(self.child_roots)
+        parent_child_roots_list.append(self.root)
 
         self.root.title("Pika Center Invoicing Program - " + self.action_type_str[0] + " Product")
         self.root.geometry(tools.generate_tk_geometry(window_size))
@@ -32,7 +34,7 @@ class ManageProduct:
         self.root.resizable(False, False)
 
         self.canvas_frame = ttk.Frame(self.root)
-        self.canvas = Canvas(self.canvas_frame, width=self.frame_width, height=self.frame_height)
+        self.canvas = Canvas(self.canvas_frame, width=self.frame_width, height=self.frame_height, bd=0, highlightthickness=0, relief='ridge')
         self.canvas_sb = ttk.Scrollbar(self.canvas_frame, orient=VERTICAL, command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.canvas_sb.set)
         self.canvas.bind('<Configure>', lambda event: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
@@ -202,12 +204,13 @@ class ManageProduct:
             self.load_existing_data()
         
         self.root.lift()
-        self.root.mainloop()
+        # self.root.mainloop()
     
     def close_window(self, *args):
         tools.change_window_status(self.window_status, 'is_closed', True)
         self.root.destroy()
-        self.parent_obj.__init__(self.parent_obj.window_status, self.db_password)
+
+        tools.destroy_roots_recursively(self.child_roots)
 
     def correct_alphanumerical_entry(self, *args):
         type = args[0]
@@ -257,25 +260,24 @@ class ManageProduct:
             self.form_detail_vars[key][selected_entry_idx].set('0')
             
     def load_existing_data(self):
-        if len(self.product_key) > 0:
-            query_sql = "SELECT * FROM public.products WHERE pkey = :product_key LIMIT 1"
-            conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
-            rl = conn.run(query_sql, product_key=self.product_key)
-            conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
-            detail_query_sql = "SELECT pkey, sku, buyprice, sellprice, temp_invoice_id FROM public.products_details WHERE refproductkey = :product_key"
-            rl_detail = conn.run(detail_query_sql, product_key=self.product_key)
-            
-            if len(rl) == 1:
-                self.form_vars['product']['name'].set(str(rl[0][1]))
-                self.form_vars['product']['description'].set(str(rl[0][2]))
-                if len(rl_detail) > 0:
-                    for i in range(len(rl_detail)):
-                        self.add_new_row({
-                            'sku': str(rl_detail[i][1]),
-                            'temp_invoice_id': str(rl_detail[i][4]),
-                            'buyprice': rl_detail[i][2],
-                            'sellprice': rl_detail[i][3],
-                        })
+        query_sql = "SELECT * FROM public.products WHERE pkey = :product_key LIMIT 1"
+        conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
+        rl = conn.run(query_sql, product_key=self.product_key)
+        conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
+        detail_query_sql = "SELECT pkey, sku, buyprice, sellprice, temp_invoice_id FROM public.products_details WHERE refproductkey = :product_key"
+        rl_detail = conn.run(detail_query_sql, product_key=self.product_key)
+        
+        if len(rl) == 1:
+            self.form_vars['product']['name'].set(str(rl[0][1]))
+            self.form_vars['product']['description'].set(str(rl[0][2]))
+            if len(rl_detail) > 0:
+                for i in range(len(rl_detail)):
+                    self.add_new_row({
+                        'sku': str(rl_detail[i][1]),
+                        'temp_invoice_id': str(rl_detail[i][4]),
+                        'buyprice': rl_detail[i][2],
+                        'sellprice': rl_detail[i][3],
+                    })
 
     def add_new_row(self, *args):
         current_len = len(self.form_detail_widgets['del_btn'])
@@ -395,7 +397,7 @@ class ManageProduct:
             return
 
         res_list = [None]
-        Confirmation("Product", "Konfirmasi Penyimpanan Produk", res_list=res_list)
+        Confirmation(self.root, "Product", "Konfirmasi Penyimpanan Produk", res_list=res_list)
         confirmed = res_list[0]
 
         if confirmed:
