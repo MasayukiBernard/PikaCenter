@@ -269,9 +269,9 @@ class ManageProduct:
 
         self.form_detail_widgets['frame']['title'].grid_columnconfigure(0, weight=1)
 
-        self.base_weights = [3,3,4,7,1]
+        self.base_weights = [6,6,4,9,1]
         if self.action_type == 'sold':
-            self.base_weights = [3,2,2,3,4,1]
+            self.base_weights = [5,5,4,7,4,1]
         
         for i in range(len(self.detail_widgets_keys)):
             self.form_detail_widgets['frame']['heading']['base'].grid_columnconfigure(i, weight=self.base_weights[i])
@@ -471,7 +471,7 @@ class ManageProduct:
                 widget = ttk.Entry(self.form_detail_widgets['frame']['entry'][current_len], state='disabled', justify='center', textvariable=self.form_detail_vars[self.detail_widgets_keys[i]][current_len], width=21)
                 widget.bind("<ButtonPress-1>", partial(self.show_date_picker, self.form_detail_vars[self.detail_widgets_keys[i]][current_len]))
             elif self.detail_widgets_keys[i] == 'sales_type':
-                widget = ttk.Combobox(self.form_detail_widgets['frame']['entry'][current_len], justify='center')
+                widget = ttk.Combobox(self.form_detail_widgets['frame']['entry'][current_len], justify='center', width=15)
                 widget['values'] = self.form_detail_vars['sales_type_choices']
             elif self.detail_widgets_keys[i] == 'del_btn':
                 widget = ttk.Button(self.form_detail_widgets['frame']['entry'][current_len], text='X',width=3, command=partial(self.delete_row, current_len))
@@ -504,16 +504,17 @@ class ManageProduct:
         self.form_detail_widgets['frame']['entry'][current_len].grid(column=0, row=self.current_row_idx, sticky=(W, E))
         self.current_row_idx += 1
 
-        padxs = [[self.pad_val*2-3,0],[0,0],[0,0],[0,0],[0,self.pad_val*5]]
+        # padxs = [[0,0]] * 5
+        padxs = [[self.pad_val*3,0],[self.pad_val*3,0],[self.pad_val*3,0],[0,0],[0, self.pad_val*3-3]]
         if self.action_type == 'sold':
-            padxs = [[self.pad_val*2-3,0],[0,0],[0,0],[0,0],[self.pad_val*2-3,0]]
+            padxs = [[self.pad_val,0],[0,0],[self.pad_val,0],[self.pad_val,0],[0,self.pad_val*2],[0,self.pad_val*3]]
 
         column_idx = 0
         for key in self.detail_widgets_keys:
             if key != 'del_btn':
-                self.form_detail_widgets['entry'][self.detail_widgets_keys[column_idx]][current_len].grid(column=column_idx, row=0, sticky=(W), padx=(padxs[column_idx][0], padxs[column_idx][1]))
-            column_idx +=1
-        self.form_detail_widgets['del_btn'][current_len].grid(column=column_idx, row=0, sticky=(W), padx=(0, self.pad_val*2-3))
+                self.form_detail_widgets['entry'][self.detail_widgets_keys[column_idx]][current_len].grid(column=column_idx, row=0, padx=(padxs[column_idx][0], padxs[column_idx][1]))
+                column_idx +=1
+        self.form_detail_widgets['del_btn'][current_len].grid(column=column_idx, row=0, sticky=(W), padx=(padxs[column_idx][0],padxs[column_idx][1]))
 
         self.form_detail_widgets['frame']['btns_row'].grid(column=0, row=self.current_row_idx, sticky=(W))
         self.form_detail_widgets['add_row_btn'].grid(column=0, row=0, sticky=(W), padx=(self.pad_val+2, 0))
