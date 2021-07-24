@@ -96,7 +96,7 @@ class Inventory:
             'refresh': ttk.Button(self.product_btn_frame, text="Refresh", command=partial(self.refresh_product_tree_data, False)),
             'manage_product_with_entries': ttk.Button(self.product_btn_frame, text="MANAGE PRODUCT & ARRIVED LOGS", command=partial(self.show_manage_product, 'arrived')),
             'manage_sold': ttk.Button(self.product_btn_frame, text="MANAGE SOLD", command=partial(self.show_manage_product, 'sold')),
-            'delete': ttk.Button(self.product_btn_frame, text="DELETE", command=partial(self.show_manage_product, 'delete'))
+            'delete': ttk.Button(self.product_btn_frame, text="DELETE", command=partial(self.delete_product, 'delete'))
         }
         self.tree['product'].bind('<<TreeviewSelect>>', self.refresh_detail_trees_data)
 
@@ -132,8 +132,6 @@ class Inventory:
 
         self.refresh_product_tree_data(False)
         self.root.lift()
-        self.show_manage_product('arrived')
-        self.show_manage_product('sold')
     
     def close_window(self):
         tools.change_window_status(self.window_status, 'is_closed', True)
@@ -184,7 +182,7 @@ class Inventory:
                 'description': str(rl[i][2]),
                 'sku': str(rl[i][3]),
                 'available_stock': str(tools.create_pretty_numerical(arrived_stock - used_stock)) + " / " + str(tools.create_pretty_numerical(arrived_stock)),
-                'availibility_rate': "{:.1f}%".format((arrived_stock - used_stock) * 100 / arrived_stock) if arrived_stock > 0 else '0%'
+                'availibility_rate': "{:.1f}%".format((arrived_stock - used_stock) * 100 / arrived_stock) if arrived_stock > 0 else '0.0%'
             }
             
 
@@ -219,7 +217,7 @@ class Inventory:
                 self.tree[tree_key[i]].insert('', 'end', iid=rl_detail[j][0], values=(j+1, *val_args))
 
             if tree_key[i] == 'arrived':
-                self.arrived_averaged_buyprice_label.configure(text="Average Buy Price: " + tools.create_pretty_numerical(total_buy_price / len(rl_detail) if len(rl_detail) > 0 else "-"))
+                self.arrived_averaged_buyprice_label.configure(text="Average Buy Price: " + (tools.create_pretty_numerical(total_buy_price / len(rl_detail)) if len(rl_detail) > 0 else "-"))
     
     def clear_detail_trees(self):
         self.tree['arrived'].delete(*self.tree['arrived'].get_children())
@@ -232,12 +230,13 @@ class Inventory:
     def show_manage_product(self, *args):
 
         action_type = args[0]
-        selected_product_keys = ""
 
         if action_type == 'arrived' or action_type == 'sold':
             selected_product_keys = self.tree['product'].selection()
             if len(selected_product_keys) == 1:
                 selected_product_keys = selected_product_keys[0]
+            else:
+                selected_product_keys = ""
 
         ManageProduct(self.child_windows_status, self.child_roots, self.db_password, action_type, selected_product_keys)
 
@@ -245,7 +244,7 @@ class Inventory:
         selected_product_key = self.tree['product'].selection()[0]
 
         if len(selected_product_key) == 0:
-            Alert(self.child_roots, "Please select a listed product before managing it!")
+            Alert(self.child_roots, "Please select a listed product before deleting it!")
             return
         
         res_list = [None]
@@ -255,7 +254,8 @@ class Inventory:
         if confirmed:
             conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
             conn.run("START TRANSACTION")
-            conn.run("DELETE FROM public.products_details WHERE refproductkey = :product_key", product_key=selected_product_key)
+            conn.run("DELETE FROM public.arrived_products_log WHERE refproductkey = :product_key", product_key=selected_product_key)
+            conn.run("DELETE FROM public.sold_products_log WHERE refproductkey = :product_key", product_key=selected_product_key)
             conn.run("DELETE FROM public.products WHERE pkey = :product_key", product_key=selected_product_key)
             conn.run("COMMIT")
             self.refresh_product_tree_data(False)
