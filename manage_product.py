@@ -112,7 +112,7 @@ class ManageProduct:
             status_str = "Add"
         self.form_widgets['entry']['status'].configure(text=status_str)
 
-        if status_str == "Manage":
+        if self.action_type == 'sold' and status_str == "Manage":
             self.form_widgets['entry']['sku'].configure(state='disabled') 
             self.form_widgets['entry']['name'].configure(state='disabled')
             self.form_widgets['entry']['description'].configure(state='disabled')
@@ -157,43 +157,7 @@ class ManageProduct:
             self.form_detail_widgets['frame']['heading']['column'][self.detail_widgets_keys[i]] = ttk.Frame(self.form_detail_widgets['frame']['heading']['base'])
             self.form_detail_widgets['label']['heading'][self.detail_widgets_keys[i]] = ttk.Label(self.form_detail_widgets['frame']['heading']['column'][self.detail_widgets_keys[i]], text=self.heading_texts[i])
             self.form_detail_widgets['entry'][self.detail_widgets_keys[i]] = []
-        # self.form_detail_widgets['frame']['heading']['column'] = {
-        #     'entry_date': ttk.Frame(self.form_detail_widgets['frame']['heading']['base']),
-        #     'eta': ttk.Frame(self.form_detail_widgets['frame']['heading']['base']),
-        #     'qty': ttk.Frame(self.form_detail_widgets['frame']['heading']['base']),
-        #     'buyprice': ttk.Frame(self.form_detail_widgets['frame']['heading']['base']),
-        # }
-        # if self.action_type == 'sold':
-        #     self.form_detail_widgets['frame']['heading']['column'] = {
-        #         'sold_date': ttk.Frame(self.form_detail_widgets['frame']['heading']['base']),
-        #         'qty': ttk.Frame(self.form_detail_widgets['frame']['heading']['base']),
-        #         'sellprice': ttk.Frame(self.form_detail_widgets['frame']['heading']['base']),
-        #         'sales_type': ttk.Frame(self.form_detail_widgets['frame']['heading']['base']),
-        #         'temp_invoice_id': ttk.Frame(self.form_detail_widgets['frame']['heading']['base']),
-        #     }
-        # self.form_detail_widgets['label']['heading'] = {
-        #     'entry_date': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['sku'], text="Entry Date"),
-        #     'eta': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['temp_invoice_id'], text="ETA"),
-        #     'qty': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['buyprice'], text="Qty"),
-        #     'buyprice': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['sellprice'], text="Buy Price")
-        # }
-        # if self.action_type == 'sold':
-        #     self.form_detail_widgets['label']['heading'] = {
-        #         'sold_date': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['sku'], text="Sold Date"),
-        #         'qty': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['buyprice'], text="Qty"),
-        #         'sellprice': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['temp_invoice_id'], text="Sell Price"),
-        #         'sales_type': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['sellprice'], text="Sales Type"),
-        #         'temp_invoice_id': ttk.Label(self.form_detail_widgets['frame']['heading']['column']['sellprice'], text="Invoice ID")
-        #     }
 
-        # self.form_detail_widgets['entry'] = {
-        #     'sku': [],
-        #     'temp_invoice_id': [],
-        #     'buyprice': [],
-        #     'sellprice': []
-        # }
-
-        # self.form_detail_widgets['del_btn'] = []
         self.form_detail_widgets['add_row_btn'] = ttk.Button(self.form_detail_widgets['frame']['btns_row'], text='Tambah', command=self.add_new_row, width=10)
         self.form_detail_widgets['save_btn'] = ttk.Button(self.form_detail_widgets['frame']['btns_row'], text='SIMPAN', command=self.save_product, width=10)
         
@@ -239,19 +203,6 @@ class ManageProduct:
         self.form_detail_widgets['save_btn'].grid(column=1, row=0, sticky=(W), padx=(self.pad_val, 0))
         self.current_row_idx += 1
 
-        # self.form_detail_widgets['frame']['heading']['column']['sku'].grid(column=0, row=0, sticky=(W, E))
-        # self.form_detail_widgets['frame']['heading']['column']['temp_invoice_id'].grid(column=1, row=0, sticky=(W, E))
-        # self.form_detail_widgets['frame']['heading']['column']['buyprice'].grid(column=2, row=0, sticky=(W, E))
-        # self.form_detail_widgets['frame']['heading']['column']['sellprice'].grid(column=3, row=0, sticky=(W, E))
-        # self.form_detail_widgets['frame']['heading']['column']['del_btn'].grid(column=4, row=0, sticky=(W, E))
-
-        # self.form_detail_widgets['label']['title'].grid(column=0, row=0)
-        # self.form_detail_widgets['label']['heading']['sku'].grid(column=0, row=0)
-        # self.form_detail_widgets['label']['heading']['temp_invoice_id'].grid(column=0, row=0)
-        # self.form_detail_widgets['label']['heading']['buyprice'].grid(column=0, row=0)
-        # self.form_detail_widgets['label']['heading']['sellprice'].grid(column=0, row=0)
-        # self.form_detail_widgets['label']['heading']['del_btn'].grid(column=0, row=0)
-
         for child in self.form_frame.winfo_children():
             child.grid_configure(pady=(0, self.pad_val))
         
@@ -281,16 +232,6 @@ class ManageProduct:
             self.form_detail_widgets['frame']['heading']['base'].grid_columnconfigure(i, weight=self.base_weights[i])
             self.form_detail_widgets['frame']['heading']['column'][self.detail_widgets_keys[i]].grid_columnconfigure(0, weight=1)
 
-        # self.form_detail_widgets['frame']['heading']['base'].grid_columnconfigure(0, weight=8)
-        # self.form_detail_widgets['frame']['heading']['base'].grid_columnconfigure(1, weight=10) 
-        # self.form_detail_widgets['frame']['heading']['base'].grid_columnconfigure(2, weight=9)
-        # self.form_detail_widgets['frame']['heading']['base'].grid_columnconfigure(3, weight=8)
-        # self.form_detail_widgets['frame']['heading']['base'].grid_columnconfigure(4, weight=1)
-        # self.form_detail_widgets['frame']['heading']['column']['sku'].grid_columnconfigure(0, weight=1)
-        # self.form_detail_widgets['frame']['heading']['column']['temp_invoice_id'].grid_columnconfigure(0, weight=1)
-        # self.form_detail_widgets['frame']['heading']['column']['buyprice'].grid_columnconfigure(0, weight=1)
-        # self.form_detail_widgets['frame']['heading']['column']['sellprice'].grid_columnconfigure(0, weight=1)
-        # self.form_detail_widgets['frame']['heading']['column']['del_btn'].grid_columnconfigure(0, weight=1)
         self.form_detail_widgets['frame']['btns_row'].grid_columnconfigure(0, weight=1)
         self.form_detail_widgets['frame']['btns_row'].grid_columnconfigure(1, weight=1)
         
@@ -380,9 +321,6 @@ class ManageProduct:
 
     def correct_numeric_entry(self, *args):
         selected_entry_str_var = args[0]
-        # print("\ncorrect num:")
-        # print('key:',key, 'idx:',selected_entry_idx)
-        # print('len var with key:', len(self.form_detail_vars[key]))
         entered_str = selected_entry_str_var.get()
         if len(entered_str) > 0:
             res_str = ''
@@ -395,9 +333,6 @@ class ManageProduct:
     
     def fill_empty_entry(self, *args):
         selected_entry_str_var = args[0]
-        # print("\nfill empty:")
-        # print('key:',key, 'idx:',selected_entry_idx)
-        # print('len var with key:', len(self.form_detail_vars[key]))
         entered_str = selected_entry_str_var.get()
 
         if len(entered_str) == 0:
@@ -538,7 +473,6 @@ class ManageProduct:
         self.form_detail_widgets['frame']['entry'][current_len].grid(column=0, row=self.current_row_idx, sticky=(W, E))
         self.current_row_idx += 1
 
-        # padxs = [[0,0]] * 5
         padxs = [[self.pad_val*3,0],[self.pad_val*3,0],[self.pad_val*3,0],[0,0],[0, self.pad_val*3-3]]
         if self.action_type == 'sold':
             padxs = [[self.pad_val,0],[0,0],[self.pad_val,0],[self.pad_val,0],[0,self.pad_val*2],[0,self.pad_val*3]]
@@ -563,8 +497,6 @@ class ManageProduct:
     
     def delete_row(self, *args):
         current_len = len(self.form_detail_widgets['entry']['del_btn'])
-        print("\nDelete Row")
-        print("curr len", current_len)
         if current_len > 0:
             row_idx = args[0]
 
@@ -579,7 +511,6 @@ class ManageProduct:
             del self.form_detail_widgets['frame']['entry'][row_idx]
 
             new_current_len = len(self.form_detail_widgets['entry']['del_btn'])
-            print("new curr len", new_current_len)
 
             for i in range(new_current_len):
                 self.form_detail_widgets['entry']['del_btn'][i].configure(command=partial(self.delete_row, i))
@@ -591,27 +522,22 @@ class ManageProduct:
         if len(self.form_vars['name'].get()) == 0:
             is_passed = False
         
+        self.root.after(1)
         res_len = len(self.form_detail_vars[keys[0]])
-        print("RESLEN", res_len)
         row_idx_to_del = []
         for i in range(res_len):
-            print("i", i)
             is_not_empty = False
             for key in keys:
-                print('key', key)
                 if type(self.form_detail_vars[key][i]) is not int:
                     if len(self.form_detail_vars[key][i].get()) > 0:
                         if self.action_type == 'arrived':
-                            if key == 'entry_date':
-                                if self.form_detail_vars[key][i].get() == "-" and self.form_detail_vars['eta'][i].get() != "-":
-                                    is_not_empty = True
-                            elif key == 'eta':
-                                if self.form_detail_vars[key][i].get() != "-" and self.form_detail_vars['entry_date'][i].get() == "-":
+                            if key == 'eta':
+                                if self.form_detail_vars[key][i].get() != "" and self.form_detail_vars['entry_date'][i].get() != "":
                                     is_not_empty = True
                             elif key == 'buyprice' and self.form_detail_vars[key][i].get() != "0":
                                 is_not_empty = True
                         elif self.action_type == 'sold':
-                            if key == 'sold_date' and self.form_detail_vars[key][i].get() != "-":
+                            if key == 'sold_date' and self.form_detail_vars[key][i].get() != "":
                                 is_not_empty = True
                             elif key == 'sellprice' and self.form_detail_vars[key][i].get() != "0":
                                 is_not_empty = True
@@ -631,14 +557,40 @@ class ManageProduct:
         for idx in row_idx_to_del:
             self.delete_row((idx-num_of_del))
             num_of_del+=1
+
+        self.root.after(1)
+        new_res_len = len(self.form_detail_vars[keys[0]])
+        entered_qty = 0
+        for i in range(new_res_len):
+            if self.action_type == 'arrived':
+                if self.form_detail_vars['entry_date'][i].get() == "" and self.form_detail_vars['eta'][i].get() == "":
+                    is_passed = False
+                if self.form_detail_vars['buyprice'][i].get() == "0":
+                    is_passed = False
+            elif self.action_type == 'sold':
+                if self.form_detail_vars['sold_date'][i].get() == "":
+                    is_passed = False
+                if self.form_detail_vars['sellprice'][i].get() == "0":
+                    is_passed = False
+                if str(self.form_detail_widgets['entry']['sales_type'][i].current()) == "-1":
+                    is_passed = False
+            
+            if self.form_detail_vars['qty'][i].get() == "0":
+                is_passed = False
+            
+            entered_qty += int(self.form_detail_vars['qty'][i].get().replace(",", ""))
         
+        if self.action_type == 'sold':
+            conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
+            total_existing_qty = conn.run("SELECT SUM(qty) FROM public.arrived_products_log WHERE refproductkey = :product_key and entry_date IS NOT NULL;", product_key=self.product_key)[0][0]
+
+            if entered_qty > total_existing_qty:
+                is_passed = False
+
+        self.root.after(1)
         return is_passed
 
     def save_product(self, *args):
-        print("BEFORE")
-        print("SKU", self.form_vars['sku'].get())
-        print("NAME", self.form_vars['name'].get())
-        print("DESC", self.form_vars['description'].get())
         for key, val in self.form_detail_vars.items():
             print(key)
             print('len:', len(val))
@@ -651,12 +603,12 @@ class ManageProduct:
 
         input_valid = self.validate_inputs()
         if not input_valid:
-            Alert(self.child_roots, 'Nama harus diisi!')
+            Alert(self.child_roots, 'Form validation failed, please recheck your inputs!')
             return
 
-        # res_list = [None]
-        # Confirmation(self.root, "Product", "Konfirmasi Penyimpanan Produk", res_list=res_list)
-        # confirmed = res_list[0]
+        res_list = [None]
+        Confirmation(self.root, "Product", "Konfirmasi Penyimpanan Produk", res_list=res_list)
+        confirmed = res_list[0]
         confirmed = True
 
         if confirmed:
@@ -667,9 +619,11 @@ class ManageProduct:
             conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
             conn.run("START TRANSACTION")
             
+            print('productkey', self.product_key)
             if self.product_key == "":
                 product_sql += "INSERT INTO public.products (pkey, name, description, sku) VALUES (:generated_uuid, :name, :description, :sku);"
                 product_dict['generated_uuid'] = conn.run("SELECT uuid_generate_v1();")[0][0]
+                self.product_key = product_dict['generated_uuid']
             else:
                 product_sql += "UPDATE public.products SET name = :name, description = :description, sku = :sku WHERE pkey = :product_key;"
                 product_dict['product_key'] = self.product_key
@@ -682,62 +636,68 @@ class ManageProduct:
                 print(k, "->", v)
             conn.run(product_sql, **product_dict)
 
+            print('detail prod key',self.product_key)
             if self.product_key != "":
-                conn.run("DELETE FROM public.arrived_products_log WHERE refproductkey = :product_key", product_key=self.product_key)            
-                conn.run("DELETE FROM public.sold_products_log WHERE refproductkey = :product_key", product_key=self.product_key)
+                if self.action_type == 'arrived':
+                    conn.run("DELETE FROM public.arrived_products_log WHERE refproductkey = :product_key", product_key=self.product_key)
+                elif self.action_type == 'sold':
+                    conn.run("DELETE FROM public.sold_products_log WHERE refproductkey = :product_key", product_key=self.product_key)
             
-            table_name = "public.arrived_products_log"
-            additional_columns = "entry_date,eta,qty,buyprice"
-            col_values = ":entry_date,:eta,:qty,:buyprice"
-            if self.action_type == 'sold':
-                table_name = "public.sold_products_log"
-                additional_columns = "sold_date,qty,sellprice,refsalestypekey,temp_invoice_id"
-                col_values = ":sold_date,:qty,:sellprice,:refsalestypekey,:temp_invoice_id"
-            
-            splitted_cols = additional_columns.split(',')
-            form_var_col_keys = ['entry_date', 'eta', 'qty', 'buyprice']
-            if self.action_type == 'sold':
-                form_var_col_keys = ['sold_date','qty', 'sellprice', 'sales_type', 'temp_invoice_id']
-            
-            month_str = {'Jan': "01", 'Feb': "02", "Mar": "03", 'Apr': "04", 'May': "05", 'Jun': "06", 'Jul': "07", 'Aug': "08", 'Sep': "09", 'Oct': "10", 'Nov': "11", 'Dec': "12"}
-            res_len = len(self.form_detail_vars[self.detail_widgets_keys[0]])
-            for i in range(res_len):
-                detail_dict = {}
-                detail_sql = "INSERT INTO "+table_name+" (pkey,refproductkey,"+additional_columns+") VALUES (uuid_generate_v1(),:generated_uuid,"+col_values+");"
+                table_name = "public.arrived_products_log"
+                additional_columns = "entry_date,eta,qty,buyprice"
+                col_values = ":entry_date,:eta,:qty,:buyprice"
+                if self.action_type == 'sold':
+                    table_name = "public.sold_products_log"
+                    additional_columns = "sold_date,qty,sellprice,refsalestypekey,temp_invoice_id"
+                    col_values = ":sold_date,:qty,:sellprice,:refsalestypekey,:temp_invoice_id"
                 
-                if self.product_key == "":
-                    detail_dict['generated_uuid'] = product_dict['generated_uuid']
-                else:
-                    detail_dict['generated_uuid'] = self.product_key
-            
-                for j in range(len(splitted_cols)):
-                    str_var = self.form_detail_vars[form_var_col_keys[j]][i]
-                    str_var_val = None
-                    if type(str_var) is not int:
-                        str_var_val = str_var.get()
+                splitted_cols = additional_columns.split(',')
+                form_var_col_keys = ['entry_date', 'eta', 'qty', 'buyprice']
+                if self.action_type == 'sold':
+                    form_var_col_keys = ['sold_date','qty', 'sellprice', 'sales_type', 'temp_invoice_id']
+                
+                month_str = {'Jan': "01", 'Feb': "02", "Mar": "03", 'Apr': "04", 'May': "05", 'Jun': "06", 'Jul': "07", 'Aug': "08", 'Sep': "09", 'Oct': "10", 'Nov': "11", 'Dec': "12"}
+                res_len = len(self.form_detail_vars[self.detail_widgets_keys[0]])
+                for i in range(res_len):
+                    detail_dict = {}
+                    detail_sql = "INSERT INTO "+table_name+" (pkey,refproductkey,"+additional_columns+") VALUES (uuid_generate_v1(),:generated_uuid,"+col_values+");"
+                    
+                    if self.product_key == "":
+                        detail_dict['generated_uuid'] = product_dict['generated_uuid']
                     else:
-                        str_var_val = str_var
-
-                    if form_var_col_keys[j] == 'entry_date' or form_var_col_keys[j] == 'eta' or form_var_col_keys[j] == 'sold_date':
-                        if str_var_val == "-" or len(str_var_val) == 0:
-                            str_var_val = None
+                        detail_dict['generated_uuid'] = self.product_key
+                
+                    for j in range(len(splitted_cols)):
+                        str_var = self.form_detail_vars[form_var_col_keys[j]][i]
+                        str_var_val = None
+                        if type(str_var) is not int:
+                            str_var_val = str_var.get()
                         else:
-                            splitted_date = str_var_val.replace(" ", "").split('-')
-                            str_var_val = date(int(splitted_date[0]), int(month_str[splitted_date[1]]), int(splitted_date[2])).isoformat()
-                    elif form_var_col_keys[j] == 'qty' or form_var_col_keys[j] == 'buyprice' or form_var_col_keys[j] == 'sellprice':
-                        str_var_val = str_var_val.replace(',', '')
-                    elif form_var_col_keys[j] == 'sales_type':
-                        str_var_val = self.sales_type_rl[int(self.form_detail_widgets['entry']['sales_type'][i].current())][0]
-                        
-                    detail_dict[splitted_cols[j]] = str_var_val
+                            str_var_val = str_var
 
-                print("Detail DICT:")
-                for k,v in detail_dict.items():
-                    print(k, "->", v, "\n")
-                print("\n")
-    
-                conn.run(detail_sql, **detail_dict)
+                        if form_var_col_keys[j] == 'entry_date' or form_var_col_keys[j] == 'eta' or form_var_col_keys[j] == 'sold_date':
+                            if str_var_val == "-" or len(str_var_val) == 0:
+                                str_var_val = None
+                            else:
+                                splitted_date = str_var_val.replace(" ", "").split('-')
+                                str_var_val = date(int(splitted_date[0]), int(month_str[splitted_date[1]]), int(splitted_date[2])).isoformat()
+                        elif form_var_col_keys[j] == 'qty' or form_var_col_keys[j] == 'buyprice' or form_var_col_keys[j] == 'sellprice':
+                            str_var_val = str_var_val.replace(',', '')
+                        elif form_var_col_keys[j] == 'sales_type':
+                            selected_idx = self.form_detail_widgets['entry']['sales_type'][i].current()
+                            print('selected_idx', type(selected_idx), selected_idx)
+                            str_var_val = self.sales_type_rl[int(selected_idx)][0]
+                            print('STRVARVAL', str_var_val)
+                            
+                        detail_dict[splitted_cols[j]] = str_var_val
+
+                    print("Detail DICT:")
+                    for k,v in detail_dict.items():
+                        print(k, "->", v, "\n")
+                    print("\n")
+        
+                    conn.run(detail_sql, **detail_dict)
+                self.close_window()
             
-            # conn.run("COMMIT")
-
-            # self.close_window()
+            self.root.after(1)
+            conn.run("COMMIT")
