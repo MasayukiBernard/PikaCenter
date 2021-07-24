@@ -23,7 +23,7 @@ class DatePicker:
         self.selected_str_var = selected_str_var
         self.counter_str_var = counter_str_var
         self.selected_str_var.set('')
-        self.root.after(1)
+        self.root.after(100)
         self.calendar = Calendar(main_frame, textvariable=self.selected_str_var, showweeknumbers=False, showothermonthdays=False, date_pattern='y-mm-dd')
         self.calendar.bind("<<CalendarSelected>>", self.destroy_window)
         self.calendar.grid(column=0, row=0)
