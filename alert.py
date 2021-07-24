@@ -29,4 +29,3 @@ class Alert:
         main_frame.rowconfigure(0, weight=1)
 
         self.root.lift()
-        self.root.mainloop()
