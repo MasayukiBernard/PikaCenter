@@ -158,8 +158,8 @@ class ManageProduct:
             self.form_detail_widgets['label']['heading'][self.detail_widgets_keys[i]] = ttk.Label(self.form_detail_widgets['frame']['heading']['column'][self.detail_widgets_keys[i]], text=self.heading_texts[i])
             self.form_detail_widgets['entry'][self.detail_widgets_keys[i]] = []
 
-        self.form_detail_widgets['add_row_btn'] = ttk.Button(self.form_detail_widgets['frame']['btns_row'], text='Tambah', command=self.add_new_row, width=10)
-        self.form_detail_widgets['save_btn'] = ttk.Button(self.form_detail_widgets['frame']['btns_row'], text='SIMPAN', command=self.save_product, width=10)
+        self.form_detail_widgets['add_row_btn'] = ttk.Button(self.form_detail_widgets['frame']['btns_row'], text='ADD ROW', command=self.add_new_row, width=10)
+        self.form_detail_widgets['save_btn'] = ttk.Button(self.form_detail_widgets['frame']['btns_row'], text='SAVE', command=self.save_product, width=10)
         
 
         self.canvas_frame.grid(column=0, row=0, sticky=(N, E, S, W))
@@ -351,7 +351,7 @@ class ManageProduct:
         if self.action_type == 'sold':
             additional_columns = "sold_date,qty,sellprice,refsalestypekey,temp_invoice_id"
             tables = "public.sold_products_log"
-            order_bys = "sold_date DESC"
+            order_bys = "sold_date ASC, temp_invoice_id ASC"
             
         detail_query_sql = "SELECT pkey," + additional_columns+ " FROM " + tables + " WHERE refproductkey = :product_key ORDER BY " + order_bys + ";"
         detail_rl = conn.run(detail_query_sql, product_key=self.product_key)
@@ -582,7 +582,12 @@ class ManageProduct:
         
         if self.action_type == 'sold':
             conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
-            total_existing_qty = conn.run("SELECT SUM(qty) FROM public.arrived_products_log WHERE refproductkey = :product_key and entry_date IS NOT NULL;", product_key=self.product_key)[0][0]
+            
+            total_existing_qty = 0
+            
+            queried_qty = conn.run("SELECT SUM(qty) FROM public.arrived_products_log WHERE refproductkey = :product_key;", product_key=self.product_key)[0][0]
+            if queried_qty is not None:
+                total_existing_qty = queried_qty
 
             if entered_qty > total_existing_qty:
                 is_passed = False
@@ -591,15 +596,15 @@ class ManageProduct:
         return is_passed
 
     def save_product(self, *args):
-        for key, val in self.form_detail_vars.items():
-            print(key)
-            print('len:', len(val))
-            for item in val:
-                if type(item) is not  int:
-                    print(item.get())
-                else:
-                    print(item)
-        print("\n")
+        # for key, val in self.form_detail_vars.items():
+        #     print(key)
+        #     print('len:', len(val))
+        #     for item in val:
+        #         if type(item) is not  int:
+        #             print(item.get())
+        #         else:
+        #             print(item)
+        # print("\n")
 
         input_valid = self.validate_inputs()
         if not input_valid:
@@ -609,17 +614,14 @@ class ManageProduct:
         res_list = [None]
         Confirmation(self.root, "Product", "Konfirmasi Penyimpanan Produk", res_list=res_list)
         confirmed = res_list[0]
-        confirmed = True
 
         if confirmed:
-            pass
             
             product_dict = {}
             product_sql = ""
             conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
             conn.run("START TRANSACTION")
             
-            print('productkey', self.product_key)
             if self.product_key == "":
                 product_sql += "INSERT INTO public.products (pkey, name, description, sku) VALUES (:generated_uuid, :name, :description, :sku);"
                 product_dict['generated_uuid'] = conn.run("SELECT uuid_generate_v1();")[0][0]
@@ -631,12 +633,12 @@ class ManageProduct:
             product_dict['description'] = tools.create_pretty_alphanumerical(self.form_vars['description'].get())
             product_dict['sku'] = tools.create_pretty_alphanumerical(self.form_vars['sku'].get())
             
-            print("PRODUCT DICT:")
-            for k,v in product_dict.items():
-                print(k, "->", v)
+            # print("\n\nProduct Dict:")
+            # for k,v in product_dict.items():
+            #     print(k, "->", v)
+
             conn.run(product_sql, **product_dict)
 
-            print('detail prod key',self.product_key)
             if self.product_key != "":
                 if self.action_type == 'arrived':
                     conn.run("DELETE FROM public.arrived_products_log WHERE refproductkey = :product_key", product_key=self.product_key)
@@ -685,16 +687,14 @@ class ManageProduct:
                             str_var_val = str_var_val.replace(',', '')
                         elif form_var_col_keys[j] == 'sales_type':
                             selected_idx = self.form_detail_widgets['entry']['sales_type'][i].current()
-                            print('selected_idx', type(selected_idx), selected_idx)
                             str_var_val = self.sales_type_rl[int(selected_idx)][0]
-                            print('STRVARVAL', str_var_val)
                             
                         detail_dict[splitted_cols[j]] = str_var_val
 
-                    print("Detail DICT:")
-                    for k,v in detail_dict.items():
-                        print(k, "->", v, "\n")
-                    print("\n")
+                    # print("Detail DICT:")
+                    # for k,v in detail_dict.items():
+                    #     print(k, "->", v, "\n")
+                    # print("\n")
         
                     conn.run(detail_sql, **detail_dict)
                 self.close_window()
