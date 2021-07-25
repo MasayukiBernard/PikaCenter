@@ -23,7 +23,7 @@ class PromptDatabasePassword:
 
         main_frame = ttk.Frame(self.root)
 
-        label = ttk.Label(main_frame, text="INPUT DATABASE PASSWORD", font=("Calibri", "20"), borderwidth=5, relief='groove')
+        label = ttk.Label(main_frame, text="INPUT DATABASE PASSWORD", font=("Calibri", "20"))
 
         self.password = password
         self.password['inputted'] = StringVar()
