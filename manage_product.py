@@ -320,7 +320,8 @@ class ManageProduct:
                 
 
     def correct_numeric_entry(self, *args):
-        selected_entry_str_var = args[0]
+        widget = args[0]
+        selected_entry_str_var = args[1]
         entered_str = selected_entry_str_var.get()
         if len(entered_str) > 0:
             res_str = ''
@@ -328,6 +329,7 @@ class ManageProduct:
             if len(res_str) > 0:
                 res_str = tools.create_pretty_numerical(int(res_str))
                 selected_entry_str_var.set(res_str)
+                widget.icursor(len(res_str))
             else:
                selected_entry_str_var.set('')
     
@@ -439,7 +441,7 @@ class ManageProduct:
                     temp_price_val = data[self.detail_widgets_keys[i]]
                     if temp_price_val != "0" and type(temp_price_val) is not str:
                         data[self.detail_widgets_keys[i]] = tools.create_pretty_numerical(temp_price_val)
-                    widget.bind("<KeyRelease>", partial(self.correct_numeric_entry, self.form_detail_vars[self.detail_widgets_keys[i]][current_len]))
+                    widget.bind("<KeyRelease>", partial(self.correct_numeric_entry, widget, self.form_detail_vars[self.detail_widgets_keys[i]][current_len]))
                     widget.bind("<FocusOut>", partial(self.fill_empty_entry, self.form_detail_vars[self.detail_widgets_keys[i]][current_len]))
                 else:
                     # Widget only contains string
