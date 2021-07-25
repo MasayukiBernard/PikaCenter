@@ -1,25 +1,29 @@
 from tkinter import *
 from tkinter import ttk
 
+from alert import Alert
+
+from pg8000.native import Connection
 import tools
 
 class PromptDatabasePassword:
-    def __init__(self, window_status, password):
+    def __init__(self, window_status, password, is_success):
         window_size = {'width': "600", 'height': "100"}
 
         self.root = Tk()
         self.root.title("Pika Center Invoicing Program - Database Authentication")
         self.root.geometry(tools.generate_tk_geometry(window_size))
         self.root.resizable(False, False)
-        self.root.attributes("-topmost", 1)
-        
+        self.child_roots = []
+        self.root.protocol('WM_DELETE_WINDOW', self.close_window)
+
         window_status['is_closed'] = False
         self.window_status = window_status
-        self.root.protocol('WM_DELETE_WINDOW', self.close_window)
+        self.is_success = is_success
 
         main_frame = ttk.Frame(self.root)
 
-        label = ttk.Label(main_frame, text="MASUKKAN KATA SANDI DATABASE", font=("Calibri", "20"), borderwidth=5, relief='groove')
+        label = ttk.Label(main_frame, text="INPUT DATABASE PASSWORD", font=("Calibri", "20"), borderwidth=5, relief='groove')
 
         self.password = password
         self.password['inputted'] = StringVar()
@@ -46,9 +50,20 @@ class PromptDatabasePassword:
         self.root.mainloop()
 
     def get_password(self, *args):
-        self.password['inputted'] = self.password['inputted'].get()
-        self.root.destroy()
+        try:
+            conn = Connection(user="postgres", password=self.password['inputted'].get(), database="pikacenter")
+            conn.run("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
+            
+            self.password['inputted'] = self.password['inputted'].get()
+            self.is_success[0] = True
+            
+            self.root.destroy()
+            tools.destroy_roots_recursively(self.child_roots)
+        except Exception as e:
+            Alert(self.child_roots,'Database is not yet running / Inputted password is not recognized!')
 
     def close_window(self):
         tools.change_window_status(self.window_status, 'is_closed', True)
         self.root.destroy()
+
+        tools.destroy_roots_recursively(self.child_roots)
