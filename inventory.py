@@ -52,6 +52,8 @@ class Inventory:
             'arrived': ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'entry_date', 'eta', 'qty', 'buyprice'), height=4),
             'sold': ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'sold_date', 'Invoice ID', 'qty', 'sellprice', 'sales_type'), height=4),
         }
+        self.tree_style = ttk.Style()
+        self.tree_style.map("Treeview", foreground=self.fixed_map("foreground"), background=self.fixed_map("background"))
         
         self.y_scrollbar = {
             'product': ttk.Scrollbar(self.main_frame, orient=VERTICAL, command=self.tree['product'].yview),
@@ -116,11 +118,11 @@ class Inventory:
         self.product_tree_btn['refresh'].grid(column=0, row=0, ipadx=self.pad_val)
         self.product_tree_btn['manage_product_with_entries'].grid(column=1, row=0, ipadx=self.pad_val, padx=(self.pad_val*3,self.pad_val))
         self.product_tree_btn['manage_sold'].grid(column=2, row=0, ipadx=self.pad_val, padx=(0,self.pad_val))
-        self.product_tree_btn['delete'].grid(column=3, row=0, ipadx=self.pad_val, sticky=(E))
+        self.product_tree_btn['delete'].grid(column=3, row=0, padx=(700,0), ipadx=self.pad_val, sticky=(W))
 
         self.subtitle_label['arrived'].grid(column=0, columnspan=2, row=5, sticky=(W, E))
         self.tree['arrived'].grid(column=0, row=6, pady=(self.pad_val, 0))
-        self.y_scrollbar['arrived'].grid(column=1, row=6, sticky=(N, S, E), )
+        self.y_scrollbar['arrived'].grid(column=1, row=6, sticky=(N, S, E))
         self.arrived_averaged_buyprice_label.grid(column=0, row=7, sticky=(E))
         
         self.subtitle_label['sold'].grid(column=0, columnspan=2, row=8, sticky=(W, E))
@@ -152,6 +154,15 @@ class Inventory:
             if len(tools.create_pretty_alphanumerical(string_var.get())) == 0:
                 string_var.set(default_val)
 
+    def fixed_map(self, option):
+        # Returns the style map for 'option' with any styles starting with
+        # ("!disabled", "!selected", ...) filtered out
+
+        # style.map() returns an empty list for missing options, so this should
+        # be future-safe
+        return [elm for elm in self.tree_style.map("Treeview", query_opt=option)
+                if elm[:2] != ("!disabled", "!selected")]
+
     def refresh_product_tree_data(self, *args):
         is_search = args[0]
 
@@ -182,11 +193,18 @@ class Inventory:
                 'description': str(rl[i][2]),
                 'sku': str(rl[i][3]),
                 'available_stock': str(tools.create_pretty_numerical(arrived_stock - used_stock)) + " / " + str(tools.create_pretty_numerical(arrived_stock)),
-                'availibility_rate': "{:.1f}%".format((arrived_stock - used_stock) * 100 / arrived_stock) if arrived_stock > 0 else '0.0%'
+                'availibility_rate': "{:.1f}%".format((arrived_stock - used_stock) * 100 / arrived_stock) if (arrived_stock - used_stock) > 0 else '0.0%'
             }
             
-
-            self.tree['product'].insert('', 'end', iid=product['key'], values=(i+1, product['sku'], product['latest_release_date'], product['name'], product['description'], product['available_stock'], product['availibility_rate']))            
+            created_tag = ''
+            if (arrived_stock - used_stock) < 0:
+                created_tag = 'caution'
+                print('ENTERED HERE')
+                
+            
+            self.tree['product'].insert('', 'end', iid=product['key'], values=(i+1, product['sku'], product['latest_release_date'], product['name'], product['description'], product['available_stock'], product['availibility_rate']), tags=(created_tag,))
+        
+        self.tree['product'].tag_configure('caution', foreground='red', background='yellow')
 
             
     def refresh_detail_trees_data(self, event):
@@ -199,7 +217,7 @@ class Inventory:
         column = ["*", "spl.pkey, spl.sold_date, spl.qty, spl.sellprice, spl.temp_invoice_id, st.name as sales_type"]
         table = ["public.arrived_products_log", "public.sold_products_log as spl,public.sales_types as st"]
         additional_condition = ["", "AND spl.refsalestypekey = st.pkey"]
-        order_by = ["entry_date DESC, eta DESC", "sold_date DESC"]
+        order_by = ["entry_date DESC, eta DESC", "sold_date ASC, temp_invoice_id ASC"]
 
         args = [[2,3,4,5], [1,4,2,3,5]]
         conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
