@@ -7,7 +7,6 @@ from functools import partial
 from tkinter import *
 from tkinter import ttk
 
-from pg8000.native import Connection
 import tools
 
 class MainNavigation:
