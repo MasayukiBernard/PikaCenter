@@ -200,7 +200,6 @@ class Inventory:
             created_tag = ''
             if (arrived_stock - used_stock) < 0:
                 created_tag = 'caution'
-                print('ENTERED HERE')
                 
             
             self.tree['product'].insert('', 'end', iid=product['key'], values=(i+1, product['sku'], product['latest_release_date'], product['name'], product['description'], product['available_stock'], product['availibility_rate']), tags=(created_tag,))
