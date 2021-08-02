@@ -19,7 +19,7 @@ def try_connecting_to_db(window_status, password):
 if __name__ == '__main__':
     # TO REMEMBER
     # .exe program needs to always run in admin mode
-    # hide console and create a single file using "pyinstaller --onefile --noconsole --hidden-import babel.numbers --name PC-INV main.py"
+    # hide console and create a single file using "pyinstaller --onefile --noconsole --hidden-import babel.numbers --icon "D:\Work\Github_Repos\Python\GUI\PikaCenter\resources\images\Pika Center Indonesia Logo 2021 - resized.ico" --name PC-INV main.py"
     if ctypes.windll.shell32.IsUserAnAdmin():
         # Fire up postgreSql service, if not yet on
         command_res = system("sc start postgresql-x64-13")
@@ -36,7 +36,12 @@ if __name__ == '__main__':
         
         while not try_connecting_to_db(windows_status['promptdbpass'], password): pass
         
-        MainNavigation(windows_status, password['inputted'])
+        try:
+            MainNavigation(windows_status, password['inputted'])
+        except Exception:
+            print('exception happened!')
+            
+        while True: pass
         
         system("sc stop postgresql-x64-13")
 
