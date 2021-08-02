@@ -13,6 +13,7 @@ class Alert:
         
         self.root.title("Pika Center Invoicing Program - Alert")
         self.root.geometry(tools.generate_tk_geometry(window_size))
+        self.root.iconphoto(False, PhotoImage(file='resources/images/Pika Center Indonesia Logo 2021.png'))
         self.root.resizable(False, False)
 
         main_frame = ttk.Frame(self.root)

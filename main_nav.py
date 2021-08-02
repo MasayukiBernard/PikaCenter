@@ -22,6 +22,7 @@ class MainNavigation:
         self.child_roots = []
 
         self.root.title("Pika Center Invoicing Program - Main Navigation")
+        self.root.iconphoto(False, PhotoImage(file='resources/images/Pika Center Indonesia Logo 2021.png'))
         self.root.geometry(tools.generate_tk_geometry(window_size))
         self.root.protocol('WM_DELETE_WINDOW', self.close_window)
         self.root.resizable(False, False)

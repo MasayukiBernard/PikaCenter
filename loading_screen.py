@@ -8,6 +8,7 @@ class LoadingScreen:
 
         self.root = Tk()
         self.root.title("Pika Center Invoicing Program - Loading...")
+        self.root.iconphoto(False, PhotoImage(file='resources/images/Pika Center Indonesia Logo 2021.png'))
         self.root.geometry(tools.generate_tk_geometry(window_size))
         self.root.resizable(False, False)
         

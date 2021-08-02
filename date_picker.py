@@ -14,7 +14,8 @@ class DatePicker:
         parent_child_roots_list.append(self.root)
         
         self.root.protocol('WM_DELETE_WINDOW', self.clear_string_var)
-        self.root.title("Pika Center Invoicing Program - Date Pickerr")
+        self.root.title("Pika Center Invoicing Program - Date Picker")
+        self.root.iconphoto(False, PhotoImage(file='resources/images/Pika Center Indonesia Logo 2021.png'))
         self.root.geometry(tools.generate_tk_geometry(window_size))
         self.root.resizable(False, False)
 
