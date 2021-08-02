@@ -31,8 +31,9 @@ class ManageProduct:
         parent_child_roots_list.append(self.child_roots)
         parent_child_roots_list.append(self.root)
 
+        self.logo_img = PhotoImage(file='resources/images/Pika Center Indonesia Logo 2021 - resized.png')
         self.root.title("Pika Center Invoicing Program - Manage " + self.action_type_str + " Products")
-        self.root.iconphoto(False, PhotoImage(file='resources/images/Pika Center Indonesia Logo 2021.png'))
+        self.root.iconphoto(False, self.logo_img)
         self.root.geometry(tools.generate_tk_geometry(window_size))
         self.root.protocol('WM_DELETE_WINDOW', self.close_window)
         self.root.resizable(False, False)

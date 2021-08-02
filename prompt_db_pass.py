@@ -11,8 +11,10 @@ class PromptDatabasePassword:
         window_size = {'width': "600", 'height': "100"}
 
         self.root = Tk()
+
+        self.logo_img = PhotoImage(file='resources/images/Pika Center Indonesia Logo 2021 - resized.png')
         self.root.title("Pika Center Invoicing Program - Database Authentication")
-        self.root.iconphoto(False, PhotoImage(file='resources/images/Pika Center Indonesia Logo 2021.png'))
+        self.root.iconphoto(False, self.logo_img)
         self.root.geometry(tools.generate_tk_geometry(window_size))
         self.root.resizable(False, False)
         self.child_roots = []
