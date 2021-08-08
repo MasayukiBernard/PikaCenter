@@ -179,7 +179,7 @@ class Inventory:
         else:
             self.product_search_var.set(self.placeholder_val)
         
-        sql = "SELECT p.*, apl_0.entry_date AS last_entry_date FROM public.products as p LEFT OUTER JOIN public.arrived_products_log AS apl_0 ON (apl_0.pkey = (SELECT DISTINCT ON (entry_date) pkey FROM public.arrived_products_log WHERE refproductkey = p.pkey AND entry_date IS NOT NULL ORDER BY entry_date DESC LIMIT 1)) " + added_condition_sql + " GROUP BY p.pkey, apl_0.entry_date ORDER BY created_at ASC;"
+        sql = "SELECT p.*, apl_0.entry_date AS last_entry_date FROM public.products as p LEFT OUTER JOIN public.arrived_products_log AS apl_0 ON (apl_0.pkey = (SELECT DISTINCT ON (entry_date) pkey FROM public.arrived_products_log WHERE refproductkey = p.pkey AND entry_date IS NOT NULL ORDER BY entry_date DESC LIMIT 1)) " + added_condition_sql + " GROUP BY p.pkey, apl_0.entry_date ORDER BY p.sku ASC NULLS LAST;"
         rl = conn.run(sql, added_condition=added_condition)
 
         self.tree['product'].delete(*self.tree['product'].get_children())
@@ -192,8 +192,8 @@ class Inventory:
                 'key':str(rl[i][0]),
                 'latest_release_date': rl[i][5].strftime("%Y - %b - %d") if rl[i][5] is not None else "N / A",
                 'name': str(rl[i][1]),
-                'description': str(rl[i][2]),
-                'sku': str(rl[i][3]),
+                'description': '-' if rl[i][2] is None else str(rl[i][2]),
+                'sku': '-' if rl[i][3] is None else str(rl[i][3]),
                 'available_stock': str(tools.create_pretty_numerical(arrived_stock - used_stock)) + " / " + str(tools.create_pretty_numerical(arrived_stock)),
                 'availibility_rate': "{:.1f}%".format((arrived_stock - used_stock) * 100 / arrived_stock) if (arrived_stock - used_stock) > 0 else '0.0%'
             }

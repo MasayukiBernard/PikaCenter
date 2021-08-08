@@ -635,7 +635,9 @@ class ManageProduct:
                 product_dict['product_key'] = self.product_key
             product_dict['name'] = tools.create_pretty_alphanumerical(self.form_vars['name'].get())
             product_dict['description'] = tools.create_pretty_alphanumerical(self.form_vars['description'].get())
+            product_dict['description'] = product_dict['description'] if len(product_dict['description']) > 0 else None
             product_dict['sku'] = tools.create_pretty_alphanumerical(self.form_vars['sku'].get())
+            product_dict['sku'] = product_dict['sku'] if len(product_dict['sku']) > 0 else None
             
             # print("\n\nProduct Dict:")
             # for k,v in product_dict.items():
