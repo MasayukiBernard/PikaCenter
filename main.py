@@ -41,8 +41,6 @@ if __name__ == '__main__':
         except Exception:
             print('exception happened!')
             
-        while True: pass
-        
         system("sc stop postgresql-x64-13")
 
     else:

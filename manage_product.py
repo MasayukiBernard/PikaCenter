@@ -627,7 +627,7 @@ class ManageProduct:
             conn.run("START TRANSACTION")
             
             if self.product_key == "":
-                product_sql += "INSERT INTO public.products (pkey, name, description, sku) VALUES (:generated_uuid, :name, :description, :sku);"
+                product_sql += "INSERT INTO public.products (pkey, name, description, sku, created_at) VALUES (:generated_uuid, :name, :description, :sku, now());"
                 product_dict['generated_uuid'] = conn.run("SELECT uuid_generate_v1();")[0][0]
                 self.product_key = product_dict['generated_uuid']
             else:

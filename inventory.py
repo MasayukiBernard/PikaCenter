@@ -179,7 +179,7 @@ class Inventory:
         else:
             self.product_search_var.set(self.placeholder_val)
         
-        sql = "SELECT p.*, apl_0.entry_date AS last_entry_date FROM public.products as p LEFT OUTER JOIN public.arrived_products_log AS apl_0 ON (apl_0.pkey = (SELECT DISTINCT ON (entry_date) pkey FROM public.arrived_products_log WHERE refproductkey = p.pkey AND entry_date IS NOT NULL ORDER BY entry_date DESC LIMIT 1)) " + added_condition_sql + " GROUP BY p.pkey, apl_0.entry_date ORDER BY p.sku, p.name ASC;"
+        sql = "SELECT p.*, apl_0.entry_date AS last_entry_date FROM public.products as p LEFT OUTER JOIN public.arrived_products_log AS apl_0 ON (apl_0.pkey = (SELECT DISTINCT ON (entry_date) pkey FROM public.arrived_products_log WHERE refproductkey = p.pkey AND entry_date IS NOT NULL ORDER BY entry_date DESC LIMIT 1)) " + added_condition_sql + " GROUP BY p.pkey, apl_0.entry_date ORDER BY created_at ASC;"
         rl = conn.run(sql, added_condition=added_condition)
 
         self.tree['product'].delete(*self.tree['product'].get_children())
@@ -190,7 +190,7 @@ class Inventory:
             used_stock = int(conn.run("SELECT COALESCE(SUM(qty), 0) FROM public.sold_products_log WHERE refproductkey = :product_key;", product_key=rl[i][0])[0][0])
             product = {
                 'key':str(rl[i][0]),
-                'latest_release_date': rl[i][4].strftime("%Y - %b - %d") if rl[i][4] is not None else "N / A",
+                'latest_release_date': rl[i][5].strftime("%Y - %b - %d") if rl[i][5] is not None else "N / A",
                 'name': str(rl[i][1]),
                 'description': str(rl[i][2]),
                 'sku': str(rl[i][3]),
