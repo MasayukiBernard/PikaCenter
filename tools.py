@@ -38,6 +38,22 @@ def create_pretty_numerical(numeric):
     stripped_zeros = ('%.24f' % numeric).rstrip('0').rstrip('.')
     return "{:,}".format(int(stripped_zeros))
 
+def correct_numerical_entry_input(prev_str, cursor_pos, input_str):
+    corrected_pos = cursor_pos
+    corrected = create_pretty_numerical(int(input_str))
+    corrected_len = len(corrected)
+    if cursor_pos > 0 and cursor_pos < corrected_len:
+        prev_str = prev_str[:cursor_pos]
+        prev_corr_str = corrected[:cursor_pos]
+        comma_count = prev_str.count(',')
+        corrected_comma_count = prev_corr_str.count(',')
+        if corrected_comma_count - comma_count > 0:
+            corrected_pos += 1
+        elif corrected_comma_count - comma_count < 0:
+            corrected_pos -= 1
+            
+    return corrected_pos, corrected
+
 def remove_non_integer(string):
     return ''.join(filter(str.isdigit, string))
 

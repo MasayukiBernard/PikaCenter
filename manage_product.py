@@ -241,6 +241,9 @@ class ManageProduct:
             self.load_existing_data()
         
         self.root.lift()
+
+        # Temporary variable to be passed around functions
+        self.temp_numeric = None
     
     def close_window(self, *args):
         tools.change_window_status(self.window_status, 'is_closed', True)
@@ -320,27 +323,53 @@ class ManageProduct:
             else:
                 entry_str_var.set('')
                 
+    def handle_numeric_focusout(self, *args):
+        widget = args[0]
+        selected_entry_str_var = args[1]
+
+        if len(selected_entry_str_var.get()) == 0:
+            # Return numerical entries to default value
+            selected_entry_str_var.set('0')
+        
+        self.temp_numeric = None
+    
+    def handle_numeric_keyrelease(self, *args):
+        widget = args[0]
+        selected_entry_str_var = args[1]
+
+        if selected_entry_str_var.get() == self.temp_numeric:
+            # if keypress event is not an alphanumerical input
+            return
+        else:
+            self.correct_numeric_entry(widget, selected_entry_str_var)
+            
+            # store corrected input to temp var
+            self.temp_numeric = selected_entry_str_var.get()
+
+    def handle_numeric_focusin(self, *args):
+        widget = args[0]
+        selected_entry_str_var = args[1]
+        
+        if selected_entry_str_var.get() == "0":
+            selected_entry_str_var.set('')
+
+        # gets the current value of the textbox
+        self.temp_numeric = selected_entry_str_var.get()
 
     def correct_numeric_entry(self, *args):
         widget = args[0]
         selected_entry_str_var = args[1]
         entered_str = selected_entry_str_var.get()
+        curr_cursor_pos = widget.index('insert')
         if len(entered_str) > 0:
-            res_str = ''
             res_str = tools.remove_non_integer(entered_str)
             if len(res_str) > 0:
-                res_str = tools.create_pretty_numerical(int(res_str))
+                curr_cursor_pos = widget.index('insert')
+                cursor_pos, res_str = tools.correct_numerical_entry_input(entered_str, curr_cursor_pos, res_str)
                 selected_entry_str_var.set(res_str)
-                widget.icursor(len(res_str))
+                widget.icursor(cursor_pos)
             else:
                selected_entry_str_var.set('')
-    
-    def fill_empty_entry(self, *args):
-        selected_entry_str_var = args[0]
-        entered_str = selected_entry_str_var.get()
-
-        if len(entered_str) == 0:
-            selected_entry_str_var.set('0')
             
     def load_existing_data(self):
         conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
@@ -443,8 +472,9 @@ class ManageProduct:
                     temp_price_val = data[self.detail_widgets_keys[i]]
                     if temp_price_val != "0" and type(temp_price_val) is not str:
                         data[self.detail_widgets_keys[i]] = tools.create_pretty_numerical(temp_price_val)
-                    widget.bind("<KeyRelease>", partial(self.correct_numeric_entry, widget, self.form_detail_vars[self.detail_widgets_keys[i]][current_len]))
-                    widget.bind("<FocusOut>", partial(self.fill_empty_entry, self.form_detail_vars[self.detail_widgets_keys[i]][current_len]))
+                    widget.bind("<FocusIn>", partial(self.handle_numeric_focusin, widget, self.form_detail_vars[self.detail_widgets_keys[i]][current_len]))
+                    widget.bind("<KeyRelease>", partial(self.handle_numeric_keyrelease, widget, self.form_detail_vars[self.detail_widgets_keys[i]][current_len]))
+                    widget.bind("<FocusOut>", partial(self.handle_numeric_focusout, widget, self.form_detail_vars[self.detail_widgets_keys[i]][current_len]))
                 else:
                     # Widget only contains string
                     widget.configure(width=18)
@@ -523,8 +553,8 @@ class ManageProduct:
         is_passed = True
         keys = self.detail_widgets_keys[:len(self.detail_widgets_keys)-1]
 
-        if len(self.form_vars['name'].get()) == 0:
-            is_passed = False
+        if len(self.form_vars['name'].get()) == 0 or self.product_key == "":
+            return False
         
         self.root.after(1)
         res_len = len(self.form_detail_vars[keys[0]])
@@ -568,19 +598,19 @@ class ManageProduct:
         for i in range(new_res_len):
             if self.action_type == 'arrived':
                 if self.form_detail_vars['entry_date'][i].get() == "" and self.form_detail_vars['eta'][i].get() == "":
-                    is_passed = False
+                    return False
                 if self.form_detail_vars['buyprice'][i].get() == "0":
-                    is_passed = False
+                    return False
             elif self.action_type == 'sold':
                 if self.form_detail_vars['sold_date'][i].get() == "":
-                    is_passed = False
+                    return False
                 if self.form_detail_vars['sellprice'][i].get() == "0":
-                    is_passed = False
+                    return False
                 if str(self.form_detail_widgets['entry']['sales_type'][i].current()) == "-1":
-                    is_passed = False
+                    return False
             
             if self.form_detail_vars['qty'][i].get() == "0":
-                is_passed = False
+                return False
             
             entered_qty += int(self.form_detail_vars['qty'][i].get().replace(",", ""))
         
@@ -594,7 +624,7 @@ class ManageProduct:
                 total_existing_qty = queried_qty
 
             if entered_qty > total_existing_qty:
-                is_passed = False
+                return False
 
         self.root.after(1)
         return is_passed
