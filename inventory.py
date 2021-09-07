@@ -50,9 +50,9 @@ class Inventory:
         self.product_search_bar.bind('<KeyRelease>', partial(self.refresh_product_tree_data, True))
         
         self.tree = {
-            'product': ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'sku', 'latest_release_date', 'name', 'description', 'available_stock', 'availability_rate'), height=9),
+            'product': ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'sku', 'latest_release_date', 'name', 'description', 'available_stock', 'availability_rate'), height=8),
             'arrived': ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'entry_date', 'eta', 'qty', 'buyprice'), height=4),
-            'sold': ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'sold_date', 'Invoice ID', 'qty', 'sellprice', 'sales_type'), height=4),
+            'sold': ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'sold_date', 'invoice_id', 'sales_type', 'qty', 'sellprice', 'subtotal'), height=4),
         }
         self.tree_style = ttk.Style()
         self.tree_style.map("Treeview", foreground=self.fixed_map("foreground"), background=self.fixed_map("background"))
@@ -73,14 +73,14 @@ class Inventory:
             'arrived': {
                 'column_index': ['#0', 'idx', 'entry_date', 'eta', 'qty', 'buyprice'],
                 'heading_text': ['', '', 'Entry Date', 'ETA', 'Qty', 'Buy Price'],
-                'width': [0, int(self.frame_width * .025), int(self.frame_width * .1), int(self.frame_width * .1), int(self.frame_width * .075), int(self.frame_width * .675)],
+                'width': [0, int(self.frame_width * .025), int(self.frame_width * .1), int(self.frame_width * .1), int(self.frame_width * .05), int(self.frame_width * .7)],
                 'anchor': ['center', 'center', 'center', 'center', 'center', 'e'] 
             },
             'sold': {
-                'column_index': ['#0', 'idx', 'sold_date', 'Invoice ID', 'qty', 'sellprice', 'sales_type'],
-                'heading_text': ['', '', 'Sold Date', 'Invoice ID', 'Qty', 'Sell Price', 'Sales Type'],
-                'width': [0, int(self.frame_width * .025), int(self.frame_width * .1), int(self.frame_width * .15), int(self.frame_width * .075), int(self.frame_width * .475), int(self.frame_width * .15)],
-                'anchor': ['center', 'center', 'center', 'center', 'center', 'e', 'center'] 
+                'column_index': ['#0', 'idx', 'sold_date', 'invoice_id', 'sales_type', 'qty', 'sellprice', 'subtotal'],
+                'heading_text': ['', '', 'Sold Date', 'Invoice ID', 'Sales Type', 'Qty', 'Sell Price', 'Subtotal'],
+                'width': [0, int(self.frame_width * .025), int(self.frame_width * .1), int(self.frame_width * .15), int(self.frame_width * .15), int(self.frame_width * .05), int(self.frame_width * .25), int(self.frame_width * .25)],
+                'anchor': ['center', 'center', 'center', 'center', 'center', 'center', 'e', 'e'] 
             }
         }
         for key, value in tree_config.items():
@@ -105,6 +105,7 @@ class Inventory:
         self.tree['product'].bind('<<TreeviewSelect>>', self.refresh_detail_trees_data)
 
         self.arrived_averaged_buyprice_label = ttk.Label(self.main_frame, text="Average Buy Price: -", font=("", "11", "bold"))
+        self.sold_summed_sellprice_label = ttk.Label(self.main_frame, text="Total Sell Price: -", font=("", "11", "bold"))
 
         for child in self.main_frame.winfo_children():
             child.grid_configure(padx=self.pad_val, pady=(0, self.pad_val))
@@ -130,6 +131,7 @@ class Inventory:
         self.subtitle_label['sold'].grid(column=0, columnspan=2, row=8, sticky=(W, E))
         self.tree['sold'].grid(column=0, row=9)
         self.y_scrollbar['sold'].grid(column=1, row=9, sticky=(N, S, E))
+        self.sold_summed_sellprice_label.grid(column=0, row=10, sticky=(E))
 
         self.root.rowconfigure(0, weight=1)
         self.root.columnconfigure(0, weight=1)
@@ -192,8 +194,8 @@ class Inventory:
                 'key':str(rl[i][0]),
                 'latest_release_date': rl[i][5].strftime("%Y - %b - %d") if rl[i][5] is not None else "N / A",
                 'name': str(rl[i][1]),
-                'description': '-' if rl[i][2] is None else str(rl[i][2]),
-                'sku': '-' if rl[i][3] is None else str(rl[i][3]),
+                'description': '' if rl[i][2] is None else str(rl[i][2]),
+                'sku': '' if rl[i][3] is None else str(rl[i][3]),
                 'available_stock': str(tools.create_pretty_numerical(arrived_stock - used_stock)) + " / " + str(tools.create_pretty_numerical(arrived_stock)),
                 'availibility_rate': "{:.1f}%".format((arrived_stock - used_stock) * 100 / arrived_stock) if (arrived_stock - used_stock) > 0 else '0.0%'
             }
@@ -215,12 +217,12 @@ class Inventory:
         label_text = ["Arrived \"", "Sold \""]
 
         sql = ["SELECT ", " FROM ", " WHERE refproductkey = :product_key ", " ORDER BY "]
-        column = ["*", "spl.pkey, spl.sold_date, spl.qty, spl.sellprice, spl.temp_invoice_id, st.name as sales_type"]
+        column = ["*", "spl.pkey, spl.sold_date, spl.qty, spl.sellprice, spl.temp_invoice_id, st.name as sales_type, (spl.qty * spl.sellprice) as subtotal"]
         table = ["public.arrived_products_log", "public.sold_products_log as spl,public.sales_types as st"]
         additional_condition = ["", "AND spl.refsalestypekey = st.pkey"]
         order_by = ["entry_date DESC, eta DESC", "sold_date ASC, temp_invoice_id ASC"]
 
-        args = [[2,3,4,5], [1,4,2,3,5]]
+        args = [[2,3,4,5], [1,4,5,2,3,6]]
         conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
 
         for i in range(len(tree_key)):
@@ -229,14 +231,20 @@ class Inventory:
             rl_detail = conn.run(sql[0] + column[i] + sql[1] + table[i] + sql[2] + additional_condition[i] + sql[3] + order_by[i], product_key=selected_product_key)
             
             total_buy_price = 0
+            total_sell_price = 0
             for j in range(len(rl_detail)):
                 if tree_key[i] == 'arrived':
                     total_buy_price += int(rl_detail[j][5])
+                elif tree_key[i] == 'sold':
+                    total_sell_price += int(rl_detail[j][6])
+
                 val_args = ["N / A" if rl_detail[j][args[i][k]] is None else tools.create_pretty_numerical(rl_detail[j][args[i][k]]) if isinstance(rl_detail[j][args[i][k]], Decimal) or isinstance(rl_detail[j][args[i][k]], int) else rl_detail[j][args[i][k]].strftime("%Y - %b - %d") if isinstance(rl_detail[j][args[i][k]], date) else rl_detail[j][args[i][k]] for k in range(len(args[i]))]
                 self.tree[tree_key[i]].insert('', 'end', iid=rl_detail[j][0], values=(j+1, *val_args))
 
             if tree_key[i] == 'arrived':
                 self.arrived_averaged_buyprice_label.configure(text="Average Buy Price: " + (tools.create_pretty_numerical(total_buy_price / len(rl_detail)) if len(rl_detail) > 0 else "-"))
+            elif tree_key[i] == 'sold':
+                 self.sold_summed_sellprice_label.configure(text="Total Sell Price: " + (tools.create_pretty_numerical(total_sell_price) if len(rl_detail) > 0 else "-"))
     
     def clear_detail_trees(self):
         self.tree['arrived'].delete(*self.tree['arrived'].get_children())
