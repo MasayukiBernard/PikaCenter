@@ -1,6 +1,7 @@
 # Windows
 from alert import Alert
 from inventory import Inventory
+from customer import Customer
 
 # Dependencies
 from functools import partial
@@ -81,5 +82,7 @@ class MainNavigation:
         
         if entered_key == 'inventory':
             Inventory(self.windows_status['inventory'], self.child_roots, db_password=self.db_password)
+        elif entered_key == 'customer':
+            Customer(self.windows_status['customer'], self.child_roots, db_password=self.db_password)
         else:
             Alert(self.child_roots, "Selected module is currently in development, please select another module!")
