@@ -173,7 +173,6 @@ class Inventory:
         conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
 
         added_condition_sql =  ""
-        added_condition = ""
         if is_search:
             added_condition = tools.create_pretty_alphanumerical(self.product_search_var.get())
             added_condition = re.escape(added_condition)
@@ -182,7 +181,7 @@ class Inventory:
             self.product_search_var.set(self.placeholder_val)
         
         sql = "SELECT p.*, apl_0.entry_date AS last_entry_date FROM public.products as p LEFT OUTER JOIN public.arrived_products_log AS apl_0 ON (apl_0.pkey = (SELECT DISTINCT ON (entry_date) pkey FROM public.arrived_products_log WHERE refproductkey = p.pkey AND entry_date IS NOT NULL ORDER BY entry_date DESC LIMIT 1)) " + added_condition_sql + " GROUP BY p.pkey, apl_0.entry_date ORDER BY p.sku ASC NULLS LAST;"
-        rl = conn.run(sql, added_condition=added_condition)
+        rl = conn.run(sql)
 
         self.tree['product'].delete(*self.tree['product'].get_children())
         self.clear_detail_trees()
