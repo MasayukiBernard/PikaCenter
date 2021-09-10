@@ -285,13 +285,17 @@ class ManageCustomer:
         if confirmed:
             conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
             ins_val_dict ={
-                'pkey': conn.run("SELECT uuid_generate_v1();")[0][0],
                 'is_reseller': True if self.row_vars['is_reseller'].get() == "1" else False
             }
             for key in self.row_keys[3:]:
                 ins_val_dict[key] = self.row_vars[key].get()
             conn.run("START TRANSACTION")
-            sql = "INSERT INTO public.customers (pkey,is_reseller,shop_name,pic_name,name,email,phone_number,shipping_address) VALUES (:pkey,:is_reseller,:shop,:pic,:name,:email,:phone,:shipping_address);"
+            if self.product_key == "":
+                ins_val_dict['pkey'] = conn.run("SELECT uuid_generate_v1();")[0][0]
+                sql = "INSERT INTO public.customers (pkey,is_reseller,shop_name,pic_name,name,email,phone_number,shipping_address) VALUES (:pkey,:is_reseller,:shop,:pic,:name,:email,:phone,:shipping_address);"
+            else:
+                ins_val_dict['pkey'] = str(self.product_key)
+                sql = "UPDATE public.customers SET is_reseller = :is_reseller, shop_name = :shop, pic_name = :pic, name = :name, email = :email, phone_number = :phone, shipping_address = :shipping_address WHERE pkey = :pkey;"
             conn.run(sql, **ins_val_dict)
             conn.run("COMMIT")
 
