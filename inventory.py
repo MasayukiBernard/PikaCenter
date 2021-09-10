@@ -7,7 +7,6 @@ from tkinter import ttk
 from datetime import date
 from decimal import Decimal
 from pg8000.native import Connection
-import re
 import tools
 
 from manage_product import ManageProduct
@@ -174,8 +173,7 @@ class Inventory:
 
         added_condition_sql =  ""
         if is_search:
-            added_condition = tools.create_pretty_alphanumerical(self.product_search_var.get())
-            added_condition = re.escape(added_condition)
+            added_condition = tools.create_db_input_string(self.product_search_var.get())
             added_condition_sql  += 'WHERE (LOWER(p.name) LIKE LOWER(\'%' + added_condition + '%\') or LOWER(p.description) LIKE LOWER(\'%' + added_condition + '%\'))'
         else:
             self.product_search_var.set(self.placeholder_val)
