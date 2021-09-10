@@ -265,11 +265,13 @@ class Inventory:
         ManageProduct(self.child_windows_status, self.child_roots, self.db_password, action_type, selected_product_keys)
 
     def delete_product(self, *args):
-        selected_product_key = self.tree['product'].selection()[0]
+        selected_product_key = self.tree['product'].selection()
 
         if len(selected_product_key) == 0:
             Alert(self.child_roots, "Please select a listed product before deleting it!")
             return
+        
+        selected_product_key = selected_product_key[0]
         
         res_list = [None]
         Confirmation(self.root, "Delete", "Delete selected product?", res_list)
