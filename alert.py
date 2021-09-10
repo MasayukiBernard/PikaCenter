@@ -4,7 +4,7 @@ import tools
 
 class Alert:
     def __init__(self, parent_child_roots_list, message):
-        window_size = {'width': "450", 'height': "50"}
+        window_size = {'width': "450", 'height': "75"}
 
         self.root = Toplevel()
         # self.child_roots = []
