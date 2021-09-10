@@ -4,7 +4,6 @@ from tkinter import ttk
 from functools import partial
 from pg8000.native import Connection
 from datetime import date
-import re
 import tools
 
 from alert import Alert
@@ -266,7 +265,7 @@ class ManageProduct:
     def refresh_result_list(self, *args):       
         conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
         
-        typed_value = re.escape(tools.create_pretty_alphanumerical(self.form_vars['result'].get()))
+        typed_value = tools.create_db_input_string(self.form_vars['result'].get())
         if len(typed_value) > 0:
             sql = 'SELECT * FROM public.products WHERE (LOWER(name) LIKE LOWER(\'%' + typed_value + '%\') or LOWER(description) LIKE LOWER(\'%' + typed_value + '%\')) ORDER BY sku, name ASC;' 
             rl = conn.run(sql)
@@ -646,7 +645,7 @@ class ManageProduct:
             return
 
         res_list = [None]
-        Confirmation(self.root, "Product", "Konfirmasi Penyimpanan Produk", res_list=res_list)
+        Confirmation(self.root, "Product", "Save Product?", res_list=res_list)
         confirmed = res_list[0]
 
         if confirmed:
