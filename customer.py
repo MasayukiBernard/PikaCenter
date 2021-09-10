@@ -35,7 +35,7 @@ class Customer:
 
         # Window Configs
         self.logo_img = PhotoImage(file='resources/images/Pika Center Indonesia Logo 2021 - resized.png')
-        self.root.title("Pika Center Invoicing Program - Inventory")
+        self.root.title("Pika Center Invoicing Program - Customers' Data")
         self.root.iconphoto(False, self.logo_img)
         self.root.geometry(tools.generate_tk_geometry(window_size))
         self.root.protocol('WM_DELETE_WINDOW', self.close_window)
@@ -58,15 +58,15 @@ class Customer:
         self.search_bar.bind('<KeyRelease>', partial(self.refresh_tree_data, True))
 
         # Main Tree
-        self.tree = ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'name', 'phone_number', 'email', 'shipping_address'), height=23)
+        self.tree = ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'reseller', 'shop', 'pic', 'name', 'phone_number', 'email', 'shipping_address'), height=23)
         self.tree_y_sb = ttk.Scrollbar(self.main_frame, orient=VERTICAL, command=self.tree.yview)
         # Sets scrollbar to tree
         self.tree.configure(yscrollcommand=self.tree_y_sb.set)
         tree_column_config = {
-            'index': ('#0', 'idx', 'name', 'phone_number', 'email', 'shipping_address'),
-            'heading_text': ("", "", "Name", "Phone Number", "Email", "Shipping Address"),
-            'width': (0, int(self.frame_width * .025), int(self.frame_width * .2), int(self.frame_width * .2), int(self.frame_width * .2), int(self.frame_width*.35)),
-            'anchor': ("w", "center", "w", "w", "w", "w"),
+            'index': ('#0', 'idx', 'reseller', 'shop', 'pic', 'name', 'phone_number', 'email', 'shipping_address'),
+            'heading_text': ("", "", "Reseller?", "Shop Name", "PIC Name", "Name", "Phone Number", "Email", "Shipping Address"),
+            'width': (0, int(self.frame_width * .025), int(self.frame_width * .05), int(self.frame_width * .13), int(self.frame_width * .13), int(self.frame_width * .13), int(self.frame_width * .13), int(self.frame_width * .13), int(self.frame_width*.25)),
+            'anchor': ("w", "center", "center", "w", "w", "w", "w", "w", "w"),
         }
         # To set up tree's columns
         # Iterate through index key val assuming all key val in tree_column_config has conforming len
@@ -128,7 +128,7 @@ class Customer:
         return [elm for elm in self.tree_style.map("Treeview", query_opt=option) if elm[:2] != ("!disabled", "!selected")]
 
     def show_manage_form(self, *args):
-        selected_product_keys = self.tree['product'].selection()
+        selected_product_keys = self.tree.selection()
         if len(selected_product_keys) == 1:
             selected_product_keys = selected_product_keys[0]
         else:
@@ -149,7 +149,7 @@ class Customer:
         else:
             self.search_bar_var.set(self.placeholder_val)
         fields = ('pkey', 'name', 'phone_number', 'email', 'shipping_address', 'is_reseller', 'shop_name', 'pic_name')
-        sql = "SELECT " + ','.join(fields) + " FROM public.customers " +  added_condition_sql + " ORDER BY name ASC;"
+        sql = "SELECT " + ','.join(fields) + " FROM public.customers " +  added_condition_sql + " ORDER BY is_reseller DESC, name ASC;"
         rl = conn.run(sql)
 
         # Clearing tree's data
@@ -161,6 +161,6 @@ class Customer:
                 'parent': '',
                 'index': 'end',
                 'iid': str(rl[i][0]),
-                'values': tuple([i+1, str(rl[i][1]), str(rl[i][2]), str(rl[i][3]), str(rl[i][4])])
+                'values': tuple([i+1, "Yes" if rl[i][5] else "No", str(rl[i][6]), str(rl[i][7]), str(rl[i][1]), str(rl[i][2]), str(rl[i][3]), str(rl[i][4])])
             }
             self.tree.insert(**params_val)
