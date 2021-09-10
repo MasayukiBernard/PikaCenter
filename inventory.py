@@ -274,7 +274,7 @@ class Inventory:
             return
         
         res_list = [None]
-        Confirmation(self.root, "Delete", "Konfirmasi Penghapusan Produk Terpilih?", res_list)
+        Confirmation(self.root, "Delete", "Delete selected product?", res_list)
         confirmed = res_list[0]
         
         if confirmed:
