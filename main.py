@@ -32,6 +32,7 @@ if __name__ == '__main__':
             'main_nav': {'is_closed': True},
             'promptdbpass': {'is_closed': True},
             'inventory': {'is_closed': True},
+            'customer': {'is_closed': True},
         }
         
         while not try_connecting_to_db(windows_status['promptdbpass'], password): pass
