@@ -1,5 +1,6 @@
 from win32api import GetMonitorInfo, MonitorFromPoint
 import math
+from re import escape
 
 def generate_tk_geometry(window_size):
     return window_size['width'] + "x" + window_size['height'] + calculate_unused_screen_area(window_size)
@@ -54,6 +55,9 @@ def correct_numerical_entry_input(prev_str, cursor_pos, input_str):
             
     return corrected_pos, corrected
 
+def create_db_input_string(string):
+    return escape(create_pretty_alphanumerical(string)).replace('\'','\'\'').replace('"','""')
+    
 def remove_non_integer(string):
     return ''.join(filter(str.isdigit, string))
 
