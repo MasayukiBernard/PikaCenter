@@ -8,7 +8,7 @@ from tkinter import ttk
 import tools
 
 class ManageCustomer:
-    def __init__(self, window_status, parent_child_roots_list, db_password, product_key=""):
+    def __init__(self, window_status, parent_child_roots_list, db_password, customer_key=""):
         # Configs
         window_status['is_closed'] = False
         self.window_status = window_status
@@ -19,7 +19,7 @@ class ManageCustomer:
         self.frame_height = int(window_size['height']) - (2 * self.pad_val)
         
         # Argument value from caller
-        self.product_key = product_key
+        self.customer_key = customer_key
         
         # Main Window
         self.root = Toplevel()
@@ -42,13 +42,12 @@ class ManageCustomer:
         # Form Frame
         self.form_frame = ttk.Frame(self.main_frame, width=self.frame_width)
         # Row Frames and It's Widgets
-        self.row_keys = tuple(['search_results', 'status', 'is_reseller', 'shop', 'pic', 'name', 'email', 'phone', 'shipping_address'])
+        self.row_keys = tuple(['search_results', 'status', 'is_reseller', 'shop', 'name', 'email', 'phone', 'shipping_address'])
         self.row_frames = {
             'search_results': ttk.Frame(self.form_frame),
             'status': ttk.Frame(self.form_frame),
             'is_reseller': ttk.Frame(self.form_frame),
             'shop': ttk.Frame(self.form_frame),
-            'pic': ttk.Frame(self.form_frame),
             'name': ttk.Frame(self.form_frame),
             'email': ttk.Frame(self.form_frame),
             'phone': ttk.Frame(self.form_frame),
@@ -58,7 +57,6 @@ class ManageCustomer:
             'search_results': StringVar(),
             'is_reseller': StringVar(),
             'shop': StringVar(),
-            'pic': StringVar(),
             'name': StringVar(),
             'email': StringVar(),
             'phone': StringVar(),
@@ -83,10 +81,6 @@ class ManageCustomer:
             'shop': [
                 ttk.Label(self.row_frames['shop'], width=15, text="Shop Name", justify='left', font=("Calibri", "14", "bold")),
                 ttk.Entry(self.row_frames['shop'], textvariable=self.row_vars['shop'], width=60, font=("Calibri", "14", ""), style='manage_customer_default.TEntry')
-            ],
-            'pic': [
-                ttk.Label(self.row_frames['pic'], width=15, text="PIC Name", justify='left', font=("Calibri", "14", "bold")),
-                ttk.Entry(self.row_frames['pic'], textvariable=self.row_vars['pic'], width=60, font=("Calibri", "14", ""), style='manage_customer_default.TEntry')
             ],
             'name': [
                 ttk.Label(self.row_frames['name'], width=15, text="Customer's Name", justify='left', font=("Calibri", "14", "bold")),
@@ -122,7 +116,7 @@ class ManageCustomer:
         self.search_results_list = []
         self.selected_result = -1
         self.row_vars['search_results'].set(self.placeholder_val)
-        self.row_widgets['status'][1].configure(text=("Add" if self.product_key == "" else "Manage"))
+        self.row_widgets['status'][1].configure(text=("Add" if self.customer_key == "" else "Manage"))
         self.row_vars['is_reseller'].set("1")
         # Widgets gridding
         self.root.rowconfigure(0, weight=1)
@@ -147,7 +141,7 @@ class ManageCustomer:
         self.button_widgets['delete'].grid(column=0, row=0, sticky=(W), padx=(11,0))
         self.button_widgets['save'].grid(column=1, row=0, sticky=(E), padx=(0,11))
 
-        if len(self.product_key) > 0:
+        if len(self.customer_key) > 0:
             self.load_existing_data()
         
         self.root.lift()
@@ -171,21 +165,21 @@ class ManageCustomer:
                 string_var.set(default_val)
     
     def handle_cb_state_change(self, *args):
-        reseller_keys = self.row_keys[3:5]
-        state = "normal"
-        if self.row_vars['is_reseller'].get() == "0":
-            state = "disabled"
-
-        for key in reseller_keys:
-            self.row_widgets[key][1].configure(state=state)
-            self.row_vars[key].set("")
+        cb_val = self.row_vars['is_reseller'].get()
+        if  cb_val == "0":
+            self.row_widgets['shop'][1].configure(state='disabled')
+            self.row_vars['shop'].set("")
+            self.row_widgets['name'][0].configure(text="PIC's Name")
+        elif cb_val:
+            self.row_widgets['shop'][1].configure(state='normal')
+            self.row_widgets['name'][0].configure(text="Customer's Name")
             
     def load_existing_data(self, *args):
         conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
-        db_fields = ('pkey', 'is_reseller', 'shop_name', 'pic_name', 'name', 'email', 'phone_number', 'shipping_address')
+        db_fields = ('pkey', 'is_reseller', 'shop_name', 'name', 'email', 'phone_number', 'shipping_address')
         
         sql = "SELECT "+','.join(db_fields)+" FROM public.customers WHERE pkey = :cust_pkey;"
-        rl = conn.run(sql, cust_pkey=self.product_key)
+        rl = conn.run(sql, cust_pkey=self.customer_key)
         
         if len(rl) == 1:
             rl = rl[0]
@@ -216,7 +210,7 @@ class ManageCustomer:
             self.search_results_list = []
             self.selected_result = -1
             self.row_widgets['search_results'][1]['values'] = tuple()
-            self.product_key = ""
+            self.customer_key = ""
 
             self.row_widgets['status'][1].configure(text="Add")
             # Return all entries to normal state, clear entry
@@ -231,15 +225,19 @@ class ManageCustomer:
         self.search_results_list = [self.search_results_list[self.selected_result]]
         selected_rl = self.search_results_list[0]
         self.row_widgets['search_results'][1]['values'] = tuple([str(selected_rl[1])+" - "+str(selected_rl[2])+" - "+str(selected_rl[3])+" - "+str(selected_rl[4])])
-        self.product_key = selected_rl[0]
+        self.customer_key = selected_rl[0]
         self.row_widgets['status'][1].configure(text="Manage")
 
         self.load_existing_data()
     
-    def delete_data (self, *args):        
+    def delete_data (self, *args):
+        if self.customer_key == "":
+            Alert(self.child_roots, 'Form validation failed; Referred customer non-existent!')
+            return
+
         conn = Connection(user="postgres", password=self.db_password, database="pikacenter")
         sql = "SELECT pkey FROM public.customers WHERE pkey = :cust_pkey;"
-        rl = conn.run(sql, cust_pkey=self.product_key)
+        rl = conn.run(sql, cust_pkey=self.customer_key)
         if len(rl) == 0:
             Alert(self.child_roots, 'Form validation failed; Referred customer non-existent!')
         else:
@@ -249,7 +247,7 @@ class ManageCustomer:
             
             if confirmed:
                 conn.run("START TRANSACTION")
-                conn.run("DELETE FROM public.customers WHERE pkey = :cust_pkey;", cust_pkey=self.product_key)
+                conn.run("DELETE FROM public.customers WHERE pkey = :cust_pkey;", cust_pkey=self.customer_key)
                 conn.run("COMMIT")
                 
                 # CASCADE customer deletion to related invoices
@@ -263,8 +261,6 @@ class ManageCustomer:
         if self.row_vars['is_reseller'].get() == "1":
             if len(self.row_vars['shop'].get()) == 0:
                 error_msges.append("Shop name" + default_msg)
-            if len(self.row_vars['pic'].get()) == 0:
-                error_msges.append("PIC name" + default_msg)
             
         if len(self.row_vars['name'].get()) == 0:
             error_msges.append("Customer's name" + default_msg)
@@ -288,19 +284,16 @@ class ManageCustomer:
                 'is_reseller': True if self.row_vars['is_reseller'].get() == "1" else False
             }
             for key in self.row_keys[3:]:
-                ins_val_dict[key] = self.row_vars[key].get()
+                ins_val_dict[key] = tools.create_pretty_alphanumerical(self.row_vars[key].get())
             conn.run("START TRANSACTION")
-            if self.product_key == "":
+            if self.customer_key == "":
                 ins_val_dict['pkey'] = conn.run("SELECT uuid_generate_v1();")[0][0]
-                sql = "INSERT INTO public.customers (pkey,is_reseller,shop_name,pic_name,name,email,phone_number,shipping_address) VALUES (:pkey,:is_reseller,:shop,:pic,:name,:email,:phone,:shipping_address);"
+                sql = "INSERT INTO public.customers (pkey,is_reseller,shop_name,name,email,phone_number,shipping_address) VALUES (:pkey,:is_reseller,:shop,:name,:email,:phone,:shipping_address);"
             else:
-                ins_val_dict['pkey'] = str(self.product_key)
-                sql = "UPDATE public.customers SET is_reseller = :is_reseller, shop_name = :shop, pic_name = :pic, name = :name, email = :email, phone_number = :phone, shipping_address = :shipping_address WHERE pkey = :pkey;"
+                ins_val_dict['pkey'] = str(self.customer_key)
+                sql = "UPDATE public.customers SET is_reseller = :is_reseller, shop_name = :shop, name = :name, email = :email, phone_number = :phone, shipping_address = :shipping_address WHERE pkey = :pkey;"
             conn.run(sql, **ins_val_dict)
             conn.run("COMMIT")
 
             self.root.after(1)
             self.close_window()
-                
-        
-
