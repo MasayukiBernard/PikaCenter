@@ -58,14 +58,14 @@ class Customer:
         self.search_bar.bind('<KeyRelease>', partial(self.refresh_tree_data, True))
 
         # Main Tree
-        self.tree = ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'reseller', 'shop', 'pic', 'name', 'phone_number', 'email', 'shipping_address'), height=23)
+        self.tree = ttk.Treeview(self.main_frame, selectmode=BROWSE, show="tree headings", columns=('idx', 'reseller', 'shop', 'name', 'phone_number', 'email', 'shipping_address'), height=23)
         self.tree_y_sb = ttk.Scrollbar(self.main_frame, orient=VERTICAL, command=self.tree.yview)
         # Sets scrollbar to tree
         self.tree.configure(yscrollcommand=self.tree_y_sb.set)
         tree_column_config = {
-            'index': ('#0', 'idx', 'reseller', 'shop', 'pic', 'name', 'phone_number', 'email', 'shipping_address'),
-            'heading_text': ("", "", "Reseller?", "Shop Name", "PIC Name", "Name", "Phone Number", "Email", "Shipping Address"),
-            'width': (0, int(self.frame_width * .025), int(self.frame_width * .05), int(self.frame_width * .13), int(self.frame_width * .13), int(self.frame_width * .13), int(self.frame_width * .13), int(self.frame_width * .13), int(self.frame_width*.25)),
+            'index': ('#0', 'idx', 'reseller', 'shop', 'name', 'phone_number', 'email', 'shipping_address'),
+            'heading_text': ("", "", "Reseller?", "Shop Name", "PIC / Customer Name", "Phone Number", "Email", "Shipping Address"),
+            'width': (0, int(self.frame_width * .025), int(self.frame_width * .05), int(self.frame_width * .13), int(self.frame_width * .13), int(self.frame_width * .13), int(self.frame_width * .13), int(self.frame_width*.38)),
             'anchor': ("w", "center", "center", "w", "w", "w", "w", "w", "w"),
         }
         # To set up tree's columns
@@ -148,7 +148,7 @@ class Customer:
             added_condition_sql  += 'WHERE (LOWER(name) LIKE LOWER(\'%' + added_condition + '%\') or LOWER(phone_number) LIKE LOWER(\'%' + added_condition + '%\') or LOWER(email) LIKE LOWER(\'%' + added_condition + '%\'))'
         else:
             self.search_bar_var.set(self.placeholder_val)
-        fields = ('pkey', 'name', 'phone_number', 'email', 'shipping_address', 'is_reseller', 'shop_name', 'pic_name')
+        fields = ('pkey', 'name', 'phone_number', 'email', 'shipping_address', 'is_reseller', 'shop_name')
         sql = "SELECT " + ','.join(fields) + " FROM public.customers " +  added_condition_sql + " ORDER BY is_reseller DESC, name ASC;"
         rl = conn.run(sql)
 
@@ -161,6 +161,6 @@ class Customer:
                 'parent': '',
                 'index': 'end',
                 'iid': str(rl[i][0]),
-                'values': tuple([i+1, "Yes" if rl[i][5] else "No", str(rl[i][6]), str(rl[i][7]), str(rl[i][1]), str(rl[i][2]), str(rl[i][3]), str(rl[i][4])])
+                'values': tuple([i+1, "Yes" if rl[i][5] else "No", str(rl[i][6]), str(rl[i][1]), str(rl[i][2]), str(rl[i][3]), str(rl[i][4])])
             }
             self.tree.insert(**params_val)
