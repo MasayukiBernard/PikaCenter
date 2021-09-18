@@ -33,7 +33,7 @@ def change_window_status(window_status_var, key, status):
     window_status_var[key] = status
 
 def create_pretty_alphanumerical(string):
-    return string.replace("\n", "").rstrip(" ").lstrip(" ")
+    return string.replace("\n", "").rstrip().lstrip()
 
 def create_pretty_numerical(numeric):
     stripped_zeros = ('%.24f' % numeric).rstrip('0').rstrip('.')
