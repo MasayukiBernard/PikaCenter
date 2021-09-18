@@ -552,7 +552,7 @@ class ManageProduct:
         is_passed = True
         keys = self.detail_widgets_keys[:len(self.detail_widgets_keys)-1]
 
-        if len(self.form_vars['name'].get()) == 0 or self.product_key == "":
+        if len(self.form_vars['name'].get()) == 0:
             return False
         
         self.root.after(1)
